@@ -100,6 +100,9 @@
         const antiga = document.getElementById('sugestao-ia-card');
         if (antiga) antiga.remove();
 
+        // Verifica se o tema escuro está ativo
+        const temaEscuro = document.body.classList.contains('dark-theme');
+
         const card = document.createElement('div');
         card.id = 'sugestao-ia-card';
         card.style.cssText = `
@@ -109,12 +112,13 @@
             transform: translateX(-50%);
             max-width: 420px;
             width: 90%;
-            background: white;
+            background: ${temaEscuro ? '#1e293b' : 'white'};
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             z-index: 200;
-            border: 1px solid #e5e7eb;
+            border: 1px solid ${temaEscuro ? '#334155' : '#e5e7eb'};
+            color: ${temaEscuro ? '#f1f5f9' : 'inherit'};
         `;
 
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -130,15 +134,15 @@ Aponte:
 
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="font-size: 16px; margin: 0;">🤖 Análise com IA</h3>
-                <button id="fechar-sugestao-ia" style="width: auto; background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; margin: 0;">✕</button>
+                <h3 style="font-size: 16px; margin: 0; color: ${temaEscuro ? '#f1f5f9' : 'inherit'};">🤖 Análise com IA</h3>
+                <button id="fechar-sugestao-ia" style="width: auto; background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; margin: 0; color: ${temaEscuro ? '#cbd5e1' : 'inherit'};">✕</button>
             </div>
-            <p style="font-size: 14px; margin-bottom: 12px;">Arquivo exportado! Que tal pedir uma análise para o ChatGPT?</p>
-            <div style="background: #f3f4f6; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 13px; max-height: 120px; overflow-y: auto;">
+            <p style="font-size: 14px; margin-bottom: 12px; color: ${temaEscuro ? '#cbd5e1' : 'inherit'};">Arquivo exportado! Que tal pedir uma análise para o ChatGPT?</p>
+            <div style="background: ${temaEscuro ? '#0f172a' : '#f3f4f6'}; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 13px; max-height: 120px; overflow-y: auto; color: ${temaEscuro ? '#e2e8f0' : 'inherit'};">
                 ${prompt.replace(/\n/g, '<br>')}
             </div>
             <button id="copiar-prompt-ia" style="background: #10b981; margin-top: 0;">📋 Copiar prompt</button>
-            <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">Depois é só colar no ChatGPT e anexar o arquivo CSV.</p>
+            <p style="font-size: 12px; color: ${temaEscuro ? '#94a3b8' : '#6b7280'}; margin-top: 8px;">Depois é só colar no ChatGPT e anexar o arquivo CSV.</p>
         `;
 
         document.body.appendChild(card);
