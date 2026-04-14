@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>💰 Meu Dinheiro • MVP</title>
+    <title>💰 Meu Dinheiro • Contas</title>
     <style>
-        /* CSS básico incorporado para garantir que não falte */
+        /* CSS mantido igual, apenas alguns ajustes novos */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -28,9 +28,22 @@
         header {
             text-align: center;
             margin-bottom: 8px;
+            position: relative;
         }
         header h1 { color: #1f2937; font-size: 28px; }
         #data-atual { color: #6b7280; }
+        .btn-gerenciar-contas {
+            position: absolute;
+            right: 0;
+            top: 5px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            width: auto;
+            margin: 0;
+        }
         .card {
             background: white;
             border-radius: 24px;
@@ -43,7 +56,7 @@
             color: white;
         }
         .destaque label { color: #bfdbfe; }
-        .destaque input {
+        .destaque input, .destaque select {
             background: rgba(255,255,255,0.15);
             border: 1px solid #60a5fa;
             color: white;
@@ -93,227 +106,110 @@
             border-bottom: 1px solid #f3f4f6;
         }
         canvas { max-height: 200px; margin-top: 16px; }
+
+        /* Estilos para gerenciamento de contas (modal simples) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 { margin-bottom: 16px; }
+        .lista-contas { list-style: none; padding: 0; }
+        .lista-contas li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .conta-actions button {
+            width: auto;
+            padding: 4px 8px;
+            margin: 0 2px;
+            font-size: 14px;
+        }
     </style>
-    <!-- Chart.js de CDN confiável -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <h1>💰 Meu Dinheiro</h1>
-            <p id="data-atual"></p>
-        </header>
+<div class="app-container">
+    <header>
+        <h1>💰 Meu Dinheiro</h1>
+        <p id="data-atual"></p>
+        <button id="btn-gerenciar-contas" class="btn-gerenciar-contas" title="Gerenciar Contas">🏦</button>
+    </header>
 
-        <!-- Card do Salário -->
-        <div class="card destaque">
-            <label>💵 Salário do Mês</label>
-            <input type="number" id="salario-input" placeholder="R$ 0,00" step="0.01" value="">
-            <button id="btn-salvar-salario">Salvar Salário</button>
-            <div class="saldo-disponivel">
-                <span>Disponível até o fim do mês:</span>
-                <h2 id="saldo-disponivel-valor">R$ 0,00</h2>
-            </div>
-        </div>
-
-        <!-- Formulário de Gasto -->
-        <div class="card">
-            <h3>➕ Novo Gasto</h3>
-            <input type="number" id="valor-gasto" placeholder="Valor (R$)" step="0.01">
-            <select id="categoria-gasto">
-                <option value="Alimentação">🍔 Alimentação</option>
-                <option value="Transporte">🚗 Transporte</option>
-                <option value="Lazer">🎉 Lazer</option>
-                <option value="Contas">📄 Contas</option>
-                <option value="Outros">📦 Outros</option>
-            </select>
-            <input type="date" id="data-gasto">
-            <button id="btn-adicionar">Adicionar Gasto</button>
-        </div>
-
-        <!-- Lista de gastos -->
-        <div class="card">
-            <h3>📋 Últimos Lançamentos</h3>
-            <ul id="lista-gastos"></ul>
-            <button id="btn-limpar" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
-        </div>
-
-        <!-- Gráfico -->
-        <div class="card">
-            <h3>📊 Para onde foi o dinheiro?</h3>
-            <canvas id="grafico-categorias"></canvas>
-        </div>
+    <!-- Card de Saldo Total (soma dos saldos das contas incluídas) -->
+    <div class="card destaque">
+        <label>💵 Saldo Total Disponível</label>
+        <h2 id="saldo-total-valor" style="font-size: 42px; margin: 8px 0;">R$ 0,00</h2>
+        <p style="opacity:0.8; font-size:14px;">Soma das contas incluídas no total</p>
     </div>
 
-    <script>
-        // SCRIPT COMPACTO E ROBUSTO - Versão 2.0
-        (function(){
-            "use strict";
-            
-            // --- Elementos da Tela ---
-            const salarioInput = document.getElementById('salario-input');
-            const btnSalvar = document.getElementById('btn-salvar-salario');
-            const saldoH2 = document.getElementById('saldo-disponivel-valor');
-            
-            const valorInput = document.getElementById('valor-gasto');
-            const categoriaSelect = document.getElementById('categoria-gasto');
-            const dataInput = document.getElementById('data-gasto');
-            const btnAdicionar = document.getElementById('btn-adicionar');
-            const listaUl = document.getElementById('lista-gastos');
-            const btnLimpar = document.getElementById('btn-limpar');
-            const dataAtualP = document.getElementById('data-atual');
-            
-            const ctx = document.getElementById('grafico-categorias').getContext('2d');
-            let chartInstance = null;
+    <!-- Formulário de Transação (por enquanto apenas Despesa) -->
+    <div class="card">
+        <h3>➕ Nova Despesa</h3>
+        <select id="conta-transacao" required>
+            <option value="">Selecione a conta...</option>
+        </select>
+        <input type="number" id="valor-gasto" placeholder="Valor (R$)" step="0.01">
+        <select id="categoria-gasto">
+            <option value="Alimentação">🍔 Alimentação</option>
+            <option value="Transporte">🚗 Transporte</option>
+            <option value="Lazer">🎉 Lazer</option>
+            <option value="Contas">📄 Contas</option>
+            <option value="Outros">📦 Outros</option>
+        </select>
+        <input type="date" id="data-gasto">
+        <button id="btn-adicionar-despesa">Adicionar Despesa</button>
+    </div>
 
-            // --- Estado da Aplicação ---
-            let salario = 0;
-            let gastos = [];
+    <!-- Lista de Últimas Transações -->
+    <div class="card">
+        <h3>📋 Últimos Lançamentos</h3>
+        <ul id="lista-transacoes"></ul>
+        <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
+    </div>
 
-            // --- Funções Utilitárias ---
-            function formatarMoeda(valor) {
-                return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
+    <!-- Gráfico de Gastos por Categoria (ainda sem considerar conta) -->
+    <div class="card">
+        <h3>📊 Despesas por Categoria</h3>
+        <canvas id="grafico-categorias"></canvas>
+    </div>
+</div>
 
-            function carregarDados() {
-                const salarioSalvo = localStorage.getItem('salario');
-                salario = salarioSalvo ? parseFloat(salarioSalvo) : 0;
-                
-                const gastosSalvos = localStorage.getItem('gastos');
-                gastos = gastosSalvos ? JSON.parse(gastosSalvos) : [];
-                
-                // Atualiza campo de salário
-                salarioInput.value = salario || '';
-            }
+<!-- Modal para Gerenciar Contas -->
+<div class="modal-overlay" id="modal-contas">
+    <div class="modal">
+        <h3>🏦 Suas Contas</h3>
+        <ul class="lista-contas" id="lista-contas-modal"></ul>
+        <hr style="margin: 16px 0;">
+        <h4>Nova Conta</h4>
+        <input type="text" id="nova-conta-nome" placeholder="Nome (ex: Nubank)">
+        <input type="number" id="nova-conta-saldo-inicial" placeholder="Saldo inicial (R$)" step="0.01" value="0">
+        <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+            <input type="checkbox" id="nova-conta-incluir-total" checked style="width: auto; margin: 0;"> Incluir no Saldo Total
+        </label>
+        <button id="btn-criar-conta">Criar Conta</button>
+        <button id="btn-fechar-modal" style="background:#9ca3af; margin-top:8px;">Fechar</button>
+    </div>
+</div>
 
-            function salvarDados() {
-                localStorage.setItem('salario', salario);
-                localStorage.setItem('gastos', JSON.stringify(gastos));
-            }
-
-            function calcularTotalGastoMes() {
-                const hoje = new Date();
-                const mesAtual = hoje.getMonth();
-                const anoAtual = hoje.getFullYear();
-                
-                return gastos.reduce((total, g) => {
-                    const dataG = new Date(g.data + 'T00:00:00');
-                    if (dataG.getMonth() === mesAtual && dataG.getFullYear() === anoAtual) {
-                        return total + g.valor;
-                    }
-                    return total;
-                }, 0);
-            }
-
-            function atualizarInterface() {
-                // Saldo disponível
-                const totalGasto = calcularTotalGastoMes();
-                const disponivel = salario - totalGasto;
-                saldoH2.textContent = formatarMoeda(disponivel);
-                saldoH2.style.color = disponivel < 0 ? '#fca5a5' : 'white';
-                
-                // Lista de gastos (últimos 10)
-                const ordenados = [...gastos].sort((a,b) => new Date(b.data) - new Date(a.data));
-                listaUl.innerHTML = '';
-                ordenados.slice(0,10).forEach(g => {
-                    const li = document.createElement('li');
-                    const dataFormatada = new Date(g.data + 'T00:00:00').toLocaleDateString('pt-BR');
-                    li.innerHTML = `<span><strong>${g.categoria}</strong><br><small>${dataFormatada}</small></span>
-                                    <span style="font-weight:bold;">${formatarMoeda(g.valor)}</span>`;
-                    listaUl.appendChild(li);
-                });
-                
-                // Gráfico (somente mês atual)
-                const hoje = new Date();
-                const mesAtual = hoje.getMonth();
-                const anoAtual = hoje.getFullYear();
-                const totais = {};
-                gastos.forEach(g => {
-                    const d = new Date(g.data + 'T00:00:00');
-                    if (d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
-                        totais[g.categoria] = (totais[g.categoria] || 0) + g.valor;
-                    }
-                });
-                
-                const labels = Object.keys(totais);
-                const valores = Object.values(totais);
-                
-                if (chartInstance) chartInstance.destroy();
-                chartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: valores,
-                            backgroundColor: ['#f97316','#3b82f6','#10b981','#8b5cf6','#ec4899','#94a3b8']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-                
-                salvarDados();
-            }
-
-            function definirDataHoje() {
-                const hoje = new Date();
-                const ano = hoje.getFullYear();
-                const mes = String(hoje.getMonth() + 1).padStart(2,'0');
-                const dia = String(hoje.getDate()).padStart(2,'0');
-                if (!dataInput.value) {
-                    dataInput.value = `${ano}-${mes}-${dia}`;
-                }
-                dataAtualP.textContent = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            }
-
-            // --- Inicialização e Eventos ---
-            function init() {
-                carregarDados();
-                definirDataHoje();
-                atualizarInterface();
-                
-                btnSalvar.addEventListener('click', () => {
-                    const val = parseFloat(salarioInput.value);
-                    if (!isNaN(val) && val >= 0) {
-                        salario = val;
-                        atualizarInterface();
-                    } else {
-                        alert('Digite um valor válido para o salário.');
-                    }
-                });
-                
-                btnAdicionar.addEventListener('click', () => {
-                    const valor = parseFloat(valorInput.value);
-                    const categoria = categoriaSelect.value;
-                    const data = dataInput.value;
-                    
-                    if (!data) { alert('Selecione uma data.'); return; }
-                    if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return; }
-                    
-                    gastos.push({ valor, categoria, data });
-                    valorInput.value = '';
-                    atualizarInterface();
-                });
-                
-                btnLimpar.addEventListener('click', () => {
-                    if (confirm('Apagar TODOS os dados?')) {
-                        localStorage.clear();
-                        salario = 0;
-                        gastos = [];
-                        salarioInput.value = '';
-                        atualizarInterface();
-                    }
-                });
-            }
-            
-            // Inicia tudo quando a página estiver pronta
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
-        })();
-    </script>
+<script>
+    // O JavaScript será incluído aqui (próxima seção)
+</script>
 </body>
 </html>
