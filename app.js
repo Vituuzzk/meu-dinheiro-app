@@ -57,11 +57,13 @@
     };
     const menuItems = document.querySelectorAll('.menu-item');
     const fab = document.getElementById('fab-adicionar');
+
+    // Novos elementos da tela "Mais"
     const abasBtns = document.querySelectorAll('.aba-btn');
-const abasConteudos = document.querySelectorAll('.aba-conteudo');
-const btnAbrirConfig = document.getElementById('btn-abrir-configuracoes');
-const telaConfiguracoes = document.getElementById('tela-configuracoes');
-const btnVoltarConfig = document.getElementById('btn-voltar-configuracoes');
+    const abasConteudos = document.querySelectorAll('.aba-conteudo');
+    const btnAbrirConfig = document.getElementById('btn-abrir-configuracoes');
+    const telaConfiguracoes = document.getElementById('tela-configuracoes');
+    const btnVoltarConfig = document.getElementById('btn-voltar-configuracoes');
 
     // ---------- MÁSCARA ----------
     function aplicarMascaraMoeda(e) {
@@ -508,6 +510,58 @@ const btnVoltarConfig = document.getElementById('btn-voltar-configuracoes');
             document.getElementById('input-importar-backup').click();
         });
         document.getElementById('input-importar-backup').addEventListener('change', importarBackup);
+
+        // Controle das Abas na tela Mais
+        abasBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const aba = btn.dataset.aba;
+                abasBtns.forEach(b => b.classList.remove('ativo'));
+                abasConteudos.forEach(c => c.classList.remove('ativo'));
+                btn.classList.add('ativo');
+                document.getElementById(`aba-${aba}`).classList.add('ativo');
+            });
+        });
+
+        // Ações dos itens da lista
+        document.querySelectorAll('.lista-opcoes').forEach(lista => {
+            lista.addEventListener('click', (e) => {
+                const opcao = e.target.closest('.opcao-item');
+                if (!opcao) return;
+                const acao = opcao.dataset.acao;
+                switch (acao) {
+                    case 'contas':
+                        renderizarListaContasModal();
+                        modalOverlay.style.display = 'flex';
+                        break;
+                    case 'cartoes':
+                        document.querySelector('input[value="credito"]').checked = true;
+                        camposContaNormal.style.display = 'none';
+                        camposCartaoCredito.style.display = 'block';
+                        modalOverlay.style.display = 'flex';
+                        break;
+                    case 'exportar-excel':
+                        if (typeof exportarParaCSV === 'function') exportarParaCSV();
+                        else alert('Função de exportação Excel será carregada.');
+                        break;
+                    case 'backup-exportar':
+                        exportarBackup();
+                        break;
+                    case 'backup-importar':
+                        document.getElementById('input-importar-backup').click();
+                        break;
+                    default:
+                        alert(`Funcionalidade "${acao}" em breve!`);
+                }
+            });
+        });
+
+        // Abrir tela de Configurações
+        btnAbrirConfig.addEventListener('click', () => {
+            telaConfiguracoes.style.display = 'block';
+        });
+        btnVoltarConfig.addEventListener('click', () => {
+            telaConfiguracoes.style.display = 'none';
+        });
     }
 
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
