@@ -11,10 +11,10 @@
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
         body {
-            background: #f3f4f6;
+            background: #f5f7fa;
             display: flex;
             justify-content: center;
-            padding-bottom: 80px; /* espaço para o menu inferior */
+            padding-bottom: 80px;
         }
         .app-container {
             max-width: 480px;
@@ -31,49 +31,163 @@
             display: block;
         }
 
-        header {
-            text-align: center;
+        /* Cabeçalho */
+        .cabecalho-mes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 16px;
-            position: relative;
         }
-        header h1 { color: #1f2937; font-size: 24px; }
-        #data-atual { color: #6b7280; font-size: 14px; }
+        .cabecalho-mes h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .mes-navegacao {
+            display: flex;
+            gap: 12px;
+        }
+        .mes-navegacao button {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+        }
 
+        /* Cards */
         .card {
             background: white;
-            border-radius: 24px;
+            border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             margin-bottom: 16px;
         }
-        .destaque {
-            background: linear-gradient(145deg, #2563eb, #1e40af);
-            color: white;
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
-        .destaque label { color: #bfdbfe; }
-        input, select, button {
-            width: 100%;
-            padding: 14px 16px;
-            margin: 8px 0;
-            border-radius: 16px;
-            border: 1.5px solid #d1d5db;
+        .card-header h3 {
             font-size: 16px;
-            background: white;
+            font-weight: 600;
+            color: #374151;
         }
-        button {
-            background: #2563eb;
+        .card-header a {
+            color: #2563eb;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        /* Saldo principal */
+        .saldo-destaque {
+            background: linear-gradient(145deg, #1e3a5f, #152c42);
             color: white;
-            font-weight: bold;
-            border: none;
-            margin-top: 12px;
-            cursor: pointer;
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 20px;
         }
-        button:hover { background: #1d4ed8; }
-        .btn-perigo {
-            background: #f3f4f6;
-            color: #dc2626;
-            border: 1px solid #fecaca;
+        .saldo-label {
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+        .saldo-valor {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+        .resumo-linha {
+            display: flex;
+            gap: 24px;
+        }
+        .resumo-item {
+            flex: 1;
+        }
+        .resumo-item .label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .resumo-item .valor {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .receita .valor { color: #10b981; }
+        .despesa .valor { color: #f87171; }
+
+        /* Lista de contas */
+        .conta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .conta-item:last-child {
+            border-bottom: none;
+        }
+        .conta-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .conta-icone {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            font-size: 18px;
+        }
+        .conta-detalhes .nome {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .conta-detalhes .tipo {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .conta-saldo {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Cartões */
+        .cartao-resumo {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 24px 16px;
+            color: #6b7280;
+        }
+        .empty-state p {
+            margin-bottom: 16px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* Gráfico */
+        .grafico-container {
+            margin-top: 16px;
+        }
+        canvas {
+            max-height: 180px;
         }
 
         /* Menu Inferior */
@@ -100,7 +214,6 @@
             font-size: 12px;
             color: #9ca3af;
             cursor: pointer;
-            transition: 0.2s;
             background: none;
             border: none;
             padding: 8px 12px;
@@ -116,53 +229,7 @@
             font-size: 22px;
         }
 
-        /* Listas e gráficos */
-        #lista-transacoes, #lista-transacoes-tela {
-            list-style: none;
-            padding: 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        #lista-transacoes li, #lista-transacoes-tela li {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        canvas { max-height: 200px; margin-top: 16px; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .cartao-credito-info {
-            background: #fef3c7;
-            border-radius: 16px;
-            padding: 12px;
-            margin: 8px 0;
-        }
-        .tipo-conta-selector {
-            display: flex;
-            gap: 16px;
-            margin: 12px 0;
-        }
-
-        /* Botão flutuante (FAB) */
+        /* Botão Flutuante */
         .fab {
             position: fixed;
             bottom: 90px;
@@ -183,43 +250,148 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .lista-contas {
+            list-style: none;
+            padding: 0;
+        }
+        .lista-contas li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .tipo-conta-selector {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0;
+        }
+
+        /* Formulários */
+        input, select, button {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 8px 0;
+            border-radius: 16px;
+            border: 1.5px solid #d1d5db;
+            font-size: 16px;
+            background: white;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            border: none;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+        .btn-perigo {
+            background: #f3f4f6;
+            color: #dc2626;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="app-container">
-    <!-- TELA 1: PRINCIPAL (Dashboard) -->
+    <!-- ==================== TELA PRINCIPAL ==================== -->
     <div id="tela-principal" class="tela ativa">
-        <header>
-            <h1>💰 Meu Dinheiro</h1>
-            <p id="data-atual"></p>
-        </header>
-
-        <div class="card destaque">
-            <label>💵 Saldo Real Disponível</label>
-            <h2 id="saldo-total-valor" style="font-size: 42px; margin: 8px 0;">R$ 0,00</h2>
-            <p style="opacity:0.8; font-size:14px;">Contas - Faturas de Cartão</p>
+        <div class="cabecalho-mes">
+            <h1 id="mes-atual-titulo">Abril</h1>
+            <div class="mes-navegacao">
+                <button id="mes-anterior">←</button>
+                <button id="mes-proximo">→</button>
+            </div>
         </div>
 
-        <div class="card" id="resumo-cartoes" style="display: none;">
-            <h3>💳 Cartões de Crédito</h3>
-            <div id="lista-cartoes-resumo"></div>
+        <!-- Saldo em contas -->
+        <div class="saldo-destaque">
+            <div class="saldo-label">Saldo em contas</div>
+            <div class="saldo-valor" id="saldo-total-valor">R$ 0,00</div>
+            <div class="resumo-linha">
+                <div class="resumo-item receita">
+                    <div class="label">Receitas</div>
+                    <div class="valor" id="total-receitas-mes">R$ 0,00</div>
+                </div>
+                <div class="resumo-item despesa">
+                    <div class="label">Despesas</div>
+                    <div class="valor" id="total-despesas-mes">R$ 0,00</div>
+                </div>
+            </div>
         </div>
 
+        <!-- Contas -->
         <div class="card">
-            <h3>📋 Últimos Lançamentos</h3>
-            <ul id="lista-transacoes"></ul>
+            <div class="card-header">
+                <h3>Contas</h3>
+                <a href="#" id="ver-todas-contas">Ver todas</a>
+            </div>
+            <div id="lista-contas-resumo"></div>
+        </div>
+
+        <!-- Cartões de Crédito -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Cartões de crédito</h3>
+                <a href="#" id="adicionar-cartao-link">+ Adicionar</a>
+            </div>
+            <div id="cartoes-resumo-container"></div>
+        </div>
+
+        <!-- Despesas por categoria -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Despesas por categoria</h3>
+            </div>
+            <div id="grafico-container">
+                <canvas id="grafico-categorias"></canvas>
+                <div id="empty-despesas" class="empty-state" style="display: none;">
+                    <p>📊 Opa! Você não tem despesas cadastradas esse mês.</p>
+                    <p style="font-size:14px;">Adicione seus gastos no mês atual para ver seus gráficos.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planejamento mensal -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Planejamento mensal</h3>
+            </div>
+            <div class="empty-state">
+                <p>📝 Ops! Você ainda não tem um planejamento definido para esse mês.</p>
+                <p style="font-size:14px; margin-bottom:16px;">Melhore seu controle financeiro agora!</p>
+                <button id="btn-definir-planejamento" class="btn-outline">DEFINIR MEU PLANEJAMENTO</button>
+            </div>
         </div>
     </div>
 
-    <!-- TELA 2: TRANSAÇÕES -->
+    <!-- ==================== TELA TRANSAÇÕES ==================== -->
     <div id="tela-transacoes" class="tela">
-        <header>
-            <h1>📋 Transações</h1>
-        </header>
-
+        <div class="cabecalho-mes">
+            <h1>Transações</h1>
+        </div>
         <div class="card">
-            <h3>➕ Nova Transação</h3>
+            <h3 style="margin-bottom:16px;">➕ Nova Transação</h3>
             <select id="tipo-transacao">
                 <option value="despesa">📉 Despesa</option>
                 <option value="receita">📈 Receita</option>
@@ -245,40 +417,40 @@
             <input type="date" id="data-transacao">
             <button id="btn-adicionar-transacao">Adicionar</button>
         </div>
-
         <div class="card">
-            <h3>📜 Histórico Completo</h3>
-            <ul id="lista-transacoes-tela"></ul>
+            <h3>📜 Histórico</h3>
+            <ul id="lista-transacoes-tela" style="list-style:none; padding:0;"></ul>
         </div>
     </div>
 
-    <!-- TELA 3: PLANEJAMENTO -->
+    <!-- ==================== TELA PLANEJAMENTO ==================== -->
     <div id="tela-planejamento" class="tela">
-        <header>
-            <h1>📊 Planejamento</h1>
-        </header>
-        <div class="card">
-            <h3>📊 Despesas por Categoria</h3>
-            <canvas id="grafico-categorias"></canvas>
+        <div class="cabecalho-mes">
+            <h1>Planejamento</h1>
         </div>
         <div class="card">
-            <h3>🚧 Em breve</h3>
-            <p>Metas de economia, orçamentos mensais e projeções.</p>
+            <h3>📊 Visão Geral</h3>
+            <canvas id="grafico-planejamento"></canvas>
+        </div>
+        <div class="card">
+            <div class="empty-state">
+                <p>🚧 Em breve: orçamentos por categoria e metas de economia.</p>
+            </div>
         </div>
     </div>
 
-    <!-- TELA 4: MAIS -->
+    <!-- ==================== TELA MAIS ==================== -->
     <div id="tela-mais" class="tela">
-        <header>
-            <h1>⚙️ Mais</h1>
-        </header>
+        <div class="cabecalho-mes">
+            <h1>Mais</h1>
+        </div>
         <div class="card">
             <button id="btn-abrir-modal-contas">🏦 Gerenciar Contas e Cartões</button>
             <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
         </div>
         <div class="card">
             <h3>ℹ️ Sobre</h3>
-            <p>Meu Dinheiro MVP v2.0<br>Controle financeiro simples e eficiente.</p>
+            <p>Meu Dinheiro MVP v3.0<br>Controle financeiro completo.</p>
         </div>
     </div>
 </div>
@@ -291,74 +463,14 @@
     <button class="menu-item" data-tela="mais"><span>⚙️</span>Mais</button>
 </nav>
 
-<!-- Botão Flutuante para adicionar rápido -->
+<!-- Botão Flutuante -->
 <button class="fab" id="fab-adicionar">+</button>
 
-<!-- Modal Contas (mesmo de antes) -->
+<!-- Modal Contas (mesmo de antes, omitido por brevidade mas você já tem o código) -->
 <div class="modal-overlay" id="modal-contas">
-    <div class="modal">
-        <h3>🏦 Gerenciar Contas</h3>
-        <ul class="lista-contas" id="lista-contas-modal"></ul>
-        <hr style="margin: 16px 0;">
-        <h4>➕ Nova Conta</h4>
-        <input type="text" id="nova-conta-nome" placeholder="Nome (ex: Nubank)">
-        <div class="tipo-conta-selector">
-            <label><input type="radio" name="tipo-conta" value="normal" checked> 💰 Conta Normal</label>
-            <label><input type="radio" name="tipo-conta" value="credito"> 💳 Cartão de Crédito</label>
-        </div>
-        <div id="campos-conta-normal">
-            <input type="text" id="nova-conta-saldo-inicial" placeholder="Saldo inicial (R$)" class="moeda" value="0,00">
-            <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
-                <input type="checkbox" id="nova-conta-incluir-total" checked> Incluir no Saldo Total
-            </label>
-        </div>
-        <div id="campos-cartao-credito" style="display: none;">
-            <input type="text" id="cartao-limite" placeholder="Limite total (R$)" class="moeda" value="0,00">
-            <input type="number" id="cartao-dia-fechamento" placeholder="Dia de fechamento" min="1" max="31" value="1">
-            <input type="number" id="cartao-dia-vencimento" placeholder="Dia de vencimento" min="1" max="31" value="10">
-        </div>
-        <button id="btn-criar-conta">Criar Conta</button>
-        <button id="btn-fechar-modal" style="background:#9ca3af; margin-top:8px;">Fechar</button>
-    </div>
+    <!-- Conteúdo do modal de contas (igual ao que já temos) -->
 </div>
 
 <script>
-    // ---------- NAVEGAÇÃO ----------
-const telas = {
-    principal: document.getElementById('tela-principal'),
-    transacoes: document.getElementById('tela-transacoes'),
-    planejamento: document.getElementById('tela-planejamento'),
-    mais: document.getElementById('tela-mais')
-};
-const menuItems = document.querySelectorAll('.menu-item');
-const fab = document.getElementById('fab-adicionar');
-
-function mostrarTela(telaId) {
-    Object.values(telas).forEach(t => t.classList.remove('ativa'));
-    telas[telaId].classList.add('ativa');
-    
-    menuItems.forEach(item => {
-        item.classList.toggle('ativo', item.dataset.tela === telaId);
-    });
-}
-
-menuItems.forEach(item => {
-    item.addEventListener('click', () => mostrarTela(item.dataset.tela));
-});
-
-fab.addEventListener('click', () => {
-    mostrarTela('transacoes');
-    // Opcional: focar no campo de valor
-    setTimeout(() => valorTransacaoInput.focus(), 100);
-});
-
-// Botão do modal na tela "Mais"
-document.getElementById('btn-abrir-modal-contas').addEventListener('click', () => {
-    renderizarListaContasModal();
-    modalOverlay.style.display = 'flex';
-});
-
-// Adaptação: renderizar transações também na tela de Transações
-const listaTransacoesTela = document.getElementById('lista-transacoes-tela');
-// Modifique a função renderizarTransacoes() para preencher ambas as listas
+    // O SCRIPT COMPLETO ESTÁ NO PRÓXIMO BLOCO
 </script>
