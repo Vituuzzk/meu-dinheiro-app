@@ -81,18 +81,57 @@
     </div>
 
     <!-- TELA MAIS -->
-    <div id="tela-mais" class="tela">
-        <div class="cabecalho-mes"><h1>Mais</h1></div>
-        <div class="card">
-            <button id="btn-toggle-tema" style="background: #6b7280;">🌙 Alternar para Tema Escuro</button>
-            <button id="btn-abrir-modal-contas">🏦 Gerenciar Contas e Cartões</button>
-            <button id="btn-exportar-excel" style="background: #10b981; margin-top: 8px;">📊 Exportar para Excel (CSV)</button>
-            <button id="btn-exportar-backup" style="background: #059669; margin-top: 8px;">💾 Exportar Backup (JSON)</button>
-            <button id="btn-importar-backup" style="background: #047857; margin-top: 8px;">📂 Importar Backup</button>
-            <input type="file" id="input-importar-backup" accept=".json,application/json" style="display: none;">
-            <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
+    <!-- TELA MAIS (REDESENHADA) -->
+<div id="tela-mais" class="tela">
+    <div class="cabecalho-mes">
+        <h1>Mais opções</h1>
+        <button id="btn-abrir-configuracoes" style="width: auto; background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px; margin: 0; color: inherit;">⚙️</button>
+    </div>
+
+    <!-- Abas -->
+    <div class="abas-container">
+        <button class="aba-btn ativo" data-aba="gerenciar">GERENCIAR</button>
+        <button class="aba-btn" data-aba="geral">GERAL</button>
+        <button class="aba-btn" data-aba="sobre">SOBRE</button>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div id="aba-gerenciar" class="aba-conteudo ativo">
+        <div class="lista-opcoes">
+            <div class="opcao-item" data-acao="contas">🏦 Contas</div>
+            <div class="opcao-item" data-acao="cartoes">💳 Cartão de crédito</div>
+            <div class="opcao-item" data-acao="categorias">📂 Categorias</div>
+            <div class="opcao-item" data-acao="objetivos">🎯 Objetivos</div>
+            <div class="opcao-item" data-acao="importar">📥 Importar dados</div>
+            <div class="opcao-item" data-acao="exportar-excel">📊 Exportar relatório (Excel)</div>
+            <div class="opcao-item" data-acao="backup-exportar">💾 Exportar backup (JSON)</div>
+            <div class="opcao-item" data-acao="backup-importar">📂 Importar backup</div>
+            <div class="opcao-item" data-acao="lembrete">🔔 Lembrete diário</div>
         </div>
-        <div class="card"><h3>ℹ️ Sobre</h3><p>Meu Dinheiro MVP v4.0<br>Controle financeiro completo.</p></div>
+    </div>
+
+    <div id="aba-geral" class="aba-conteudo">
+        <div class="lista-opcoes">
+            <div class="opcao-item" data-acao="graficos">📈 Gráficos</div>
+            <div class="opcao-item" data-acao="desempenho">📊 Meu Desempenho</div>
+            <div class="opcao-item" data-acao="balanco">⚖️ Balanço mensal</div>
+            <div class="opcao-item" data-acao="calendario">📅 Calendário</div>
+        </div>
+    </div>
+
+    <div id="aba-sobre" class="aba-conteudo">
+        <div class="lista-opcoes">
+            <div class="opcao-item" data-acao="convidar">👥 Convide seus amigos</div>
+            <div class="opcao-item" data-acao="avaliar">⭐ Avaliar agora</div>
+            <div class="opcao-item" data-acao="termos">📄 Termos de Uso</div>
+            <div class="opcao-item" data-acao="ajuda">❓ Central de ajuda</div>
+            <div class="opcao-item" data-acao="sobre">ℹ️ Sobre</div>
+        </div>
+    </div>
+
+    <!-- Botão Limpar Dados (mantido separado) -->
+    <div style="margin-top: 24px;">
+        <button id="btn-limpar-tudo" class="btn-perigo" style="background: #fee2e2; color: #dc2626;">🗑️ Limpar Todos os Dados</button>
     </div>
 </div>
 
