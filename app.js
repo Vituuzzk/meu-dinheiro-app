@@ -290,7 +290,6 @@
         }
         localStorage.setItem('temaEscuro', escuro);
         
-        // Recriar gráfico se existir (para adaptar cores)
         if (chartInstance) {
             const canvas = document.getElementById('grafico-categorias');
             if (canvas.style.display !== 'none') {
@@ -303,6 +302,58 @@
         }
     }
 
+    // ---------- BACKUP (EXPORTAÇÃO/IMPORTAÇÃO) ----------
+    function exportarBackup() {
+        const backup = {
+            versao: '1.0',
+            data: new Date().toISOString(),
+            contas: contas,
+            transacoes: transacoes,
+            preferencias: {
+                temaEscuro: document.body.classList.contains('dark-theme')
+            }
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meu-dinheiro-backup-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('✅ Backup exportado com sucesso!');
+    }
+
+    function importarBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (!backup.contas || !backup.transacoes) throw new Error('Arquivo inválido');
+                
+                if (confirm('Importar backup substituirá todos os dados atuais. Continuar?')) {
+                    contas = backup.contas;
+                    transacoes = backup.transacoes;
+                    salvarContas();
+                    salvarTransacoes();
+                    
+                    if (backup.preferencias) {
+                        aplicarTema(backup.preferencias.temaEscuro);
+                    }
+                    
+                    location.reload();
+                }
+            } catch (error) {
+                alert('❌ Arquivo de backup inválido.');
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
     // ---------- INIT ----------
     function init() {
         carregarDados();
@@ -311,7 +362,6 @@
         renderizarDashboard();
         renderizarTransacoesAgrupadas();
 
-        // Tema escuro inicial
         const temaSalvo = localStorage.getItem('temaEscuro') === 'true';
         aplicarTema(temaSalvo);
         btnToggleTema.addEventListener('click', () => {
@@ -418,6 +468,13 @@
 
         modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
         modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) modalTransacao.style.display = 'none'; });
+
+        // Eventos de Backup
+        document.getElementById('btn-exportar-backup').addEventListener('click', exportarBackup);
+        document.getElementById('btn-importar-backup').addEventListener('click', () => {
+            document.getElementById('input-importar-backup').click();
+        });
+        document.getElementById('input-importar-backup').addEventListener('change', importarBackup);
     }
 
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
