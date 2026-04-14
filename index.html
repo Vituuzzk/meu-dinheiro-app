@@ -1,1 +1,61 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Dinheiro • MVP</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca para gerar gráficos bonitos sem esforço -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>💰 Meu Dinheiro</h1>
+            <p id="data-atual"></p>
+        </header>
 
+        <!-- Card do Salário Virtual (O Coração da Ideia) -->
+        <div class="card destaque">
+            <label>💵 Salário do Mês</label>
+            <input type="number" id="salario-input" placeholder="R$ 0,00" step="0.01">
+            <button id="btn-salvar-salario">Salvar Salário</button>
+            <div class="saldo-disponivel">
+                <span>Disponível até o fim do mês:</span>
+                <h2 id="saldo-disponivel-valor">R$ 0,00</h2>
+            </div>
+        </div>
+
+        <!-- Formulário de Lançamento Rápido -->
+        <div class="card">
+            <h3>➕ Novo Gasto</h3>
+            <input type="number" id="valor-gasto" placeholder="Valor (R$)" step="0.01">
+            <select id="categoria-gasto">
+                <option value="Alimentação">🍔 Alimentação</option>
+                <option value="Transporte">🚗 Transporte</option>
+                <option value="Lazer">🎉 Lazer</option>
+                <option value="Contas">📄 Contas</option>
+                <option value="Outros">📦 Outros</option>
+            </select>
+            <input type="date" id="data-gasto">
+            <button id="btn-adicionar">Adicionar Gasto</button>
+        </div>
+
+        <!-- Lista de Gastos Recentes -->
+        <div class="card">
+            <h3>📋 Últimos Lançamentos</h3>
+            <ul id="lista-gastos"></ul>
+            <button id="btn-limpar" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
+        </div>
+
+        <!-- Gráfico Simples -->
+        <div class="card">
+            <h3>📊 Para onde foi o dinheiro?</h3>
+            <canvas id="grafico-categorias"></canvas>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+```
