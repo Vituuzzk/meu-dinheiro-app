@@ -1,1 +1,1 @@
-.
+// Função de exportação para Excel será adicionada aqui.
