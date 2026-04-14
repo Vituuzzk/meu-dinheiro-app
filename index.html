@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>💰 Meu Dinheiro • Contas</title>
     <style>
-        /* CSS mantido igual, apenas alguns ajustes novos */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -93,13 +92,13 @@
         }
         .saldo-disponivel span { font-size: 14px; opacity: 0.9; }
         .saldo-disponivel h2 { font-size: 42px; margin-top: 8px; letter-spacing: -0.5px; }
-        #lista-gastos {
+        #lista-transacoes {
             list-style: none;
             padding: 0;
             max-height: 250px;
             overflow-y: auto;
         }
-        #lista-gastos li {
+        #lista-transacoes li {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
@@ -107,7 +106,7 @@
         }
         canvas { max-height: 200px; margin-top: 16px; }
 
-        /* Estilos para gerenciamento de contas (modal simples) */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -141,7 +140,13 @@
             margin: 0 2px;
             font-size: 14px;
         }
+        .btn-fechar {
+            background: #9ca3af;
+            margin-top: 8px;
+        }
+        .btn-fechar:hover { background: #6b7280; }
     </style>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -152,14 +157,14 @@
         <button id="btn-gerenciar-contas" class="btn-gerenciar-contas" title="Gerenciar Contas">🏦</button>
     </header>
 
-    <!-- Card de Saldo Total (soma dos saldos das contas incluídas) -->
+    <!-- Saldo Total -->
     <div class="card destaque">
         <label>💵 Saldo Total Disponível</label>
         <h2 id="saldo-total-valor" style="font-size: 42px; margin: 8px 0;">R$ 0,00</h2>
-        <p style="opacity:0.8; font-size:14px;">Soma das contas incluídas no total</p>
+        <p style="opacity:0.8; font-size:14px;">Soma das contas incluídas</p>
     </div>
 
-    <!-- Formulário de Transação (por enquanto apenas Despesa) -->
+    <!-- Formulário de Despesa -->
     <div class="card">
         <h3>➕ Nova Despesa</h3>
         <select id="conta-transacao" required>
@@ -177,39 +182,378 @@
         <button id="btn-adicionar-despesa">Adicionar Despesa</button>
     </div>
 
-    <!-- Lista de Últimas Transações -->
+    <!-- Últimos Lançamentos -->
     <div class="card">
         <h3>📋 Últimos Lançamentos</h3>
         <ul id="lista-transacoes"></ul>
         <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
     </div>
 
-    <!-- Gráfico de Gastos por Categoria (ainda sem considerar conta) -->
+    <!-- Gráfico -->
     <div class="card">
         <h3>📊 Despesas por Categoria</h3>
         <canvas id="grafico-categorias"></canvas>
     </div>
 </div>
 
-<!-- Modal para Gerenciar Contas -->
+<!-- Modal Contas -->
 <div class="modal-overlay" id="modal-contas">
     <div class="modal">
-        <h3>🏦 Suas Contas</h3>
+        <h3>🏦 Gerenciar Contas</h3>
         <ul class="lista-contas" id="lista-contas-modal"></ul>
         <hr style="margin: 16px 0;">
-        <h4>Nova Conta</h4>
+        <h4>➕ Nova Conta</h4>
         <input type="text" id="nova-conta-nome" placeholder="Nome (ex: Nubank)">
         <input type="number" id="nova-conta-saldo-inicial" placeholder="Saldo inicial (R$)" step="0.01" value="0">
         <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
             <input type="checkbox" id="nova-conta-incluir-total" checked style="width: auto; margin: 0;"> Incluir no Saldo Total
         </label>
         <button id="btn-criar-conta">Criar Conta</button>
-        <button id="btn-fechar-modal" style="background:#9ca3af; margin-top:8px;">Fechar</button>
+        <button id="btn-fechar-modal" class="btn-fechar">Fechar</button>
     </div>
 </div>
 
 <script>
-    // O JavaScript será incluído aqui (próxima seção)
+    (function(){
+        "use strict";
+
+        // ---------- ESTADO ----------
+        let contas = [];
+        let transacoes = [];
+
+        // ---------- ELEMENTOS ----------
+        const saldoTotalH2 = document.getElementById('saldo-total-valor');
+        const selectContaTransacao = document.getElementById('conta-transacao');
+        const valorGastoInput = document.getElementById('valor-gasto');
+        const categoriaGastoSelect = document.getElementById('categoria-gasto');
+        const dataGastoInput = document.getElementById('data-gasto');
+        const btnAdicionarDespesa = document.getElementById('btn-adicionar-despesa');
+        const listaTransacoesUl = document.getElementById('lista-transacoes');
+        const btnLimparTudo = document.getElementById('btn-limpar-tudo');
+        const dataAtualP = document.getElementById('data-atual');
+        const ctx = document.getElementById('grafico-categorias').getContext('2d');
+        let chartInstance = null;
+
+        // Modal
+        const modalOverlay = document.getElementById('modal-contas');
+        const btnGerenciarContas = document.getElementById('btn-gerenciar-contas');
+        const btnFecharModal = document.getElementById('btn-fechar-modal');
+        const listaContasModal = document.getElementById('lista-contas-modal');
+        const novaContaNome = document.getElementById('nova-conta-nome');
+        const novaContaSaldoInicial = document.getElementById('nova-conta-saldo-inicial');
+        const novaContaIncluirTotal = document.getElementById('nova-conta-incluir-total');
+        const btnCriarConta = document.getElementById('btn-criar-conta');
+
+        // ---------- UTILITÁRIOS ----------
+        function formatarMoeda(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function gerarId() {
+            return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function carregarDados() {
+            try {
+                const contasSalvas = localStorage.getItem('contas');
+                contas = contasSalvas ? JSON.parse(contasSalvas) : [];
+                const transacoesSalvas = localStorage.getItem('transacoes');
+                transacoes = transacoesSalvas ? JSON.parse(transacoesSalvas) : [];
+            } catch(e) {
+                console.warn("Erro ao carregar dados, resetando.");
+                contas = [];
+                transacoes = [];
+            }
+
+            // Garante ao menos uma conta padrão
+            if (contas.length === 0) {
+                contas.push({
+                    id: gerarId(),
+                    nome: 'Carteira',
+                    saldoInicial: 0,
+                    incluirNoTotal: true
+                });
+                salvarContas();
+            }
+        }
+
+        function salvarContas() {
+            localStorage.setItem('contas', JSON.stringify(contas));
+        }
+
+        function salvarTransacoes() {
+            localStorage.setItem('transacoes', JSON.stringify(transacoes));
+        }
+
+        // Calcula saldo de uma conta
+        function calcularSaldoConta(contaId) {
+            const conta = contas.find(c => c.id === contaId);
+            if (!conta) return 0;
+
+            let saldo = conta.saldoInicial;
+            transacoes.forEach(t => {
+                if (t.tipo === 'despesa' && t.contaId === contaId) {
+                    saldo -= t.valor;
+                } else if (t.tipo === 'receita' && t.contaId === contaId) {
+                    saldo += t.valor;
+                } else if (t.tipo === 'transferencia') {
+                    if (t.contaOrigemId === contaId) saldo -= t.valor;
+                    if (t.contaDestinoId === contaId) saldo += t.valor;
+                }
+            });
+            return saldo;
+        }
+
+        function calcularSaldoTotal() {
+            return contas
+                .filter(c => c.incluirNoTotal)
+                .reduce((total, conta) => total + calcularSaldoConta(conta.id), 0);
+        }
+
+        function atualizarSelectContas() {
+            selectContaTransacao.innerHTML = '<option value="">Selecione a conta...</option>';
+            contas.forEach(conta => {
+                const option = document.createElement('option');
+                option.value = conta.id;
+                const saldo = calcularSaldoConta(conta.id);
+                option.textContent = `${conta.nome} (${formatarMoeda(saldo)})`;
+                selectContaTransacao.appendChild(option);
+            });
+        }
+
+        function renderizarListaContasModal() {
+            listaContasModal.innerHTML = '';
+            if (contas.length === 0) {
+                listaContasModal.innerHTML = '<li style="justify-content:center;">Nenhuma conta cadastrada</li>';
+                return;
+            }
+            contas.forEach(conta => {
+                const saldo = calcularSaldoConta(conta.id);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div>
+                        <strong>${conta.nome}</strong> ${conta.incluirNoTotal ? '✅' : '❌'}<br>
+                        <small>Saldo: ${formatarMoeda(saldo)}</small>
+                    </div>
+                    <div class="conta-actions">
+                        <button class="btn-excluir-conta" data-id="${conta.id}" style="background:#ef4444;">🗑️</button>
+                    </div>
+                `;
+                listaContasModal.appendChild(li);
+            });
+
+            // Adiciona eventos de exclusão
+            document.querySelectorAll('.btn-excluir-conta').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    if (confirm('Excluir esta conta? Todas as transações associadas serão perdidas.')) {
+                        contas = contas.filter(c => c.id !== id);
+                        transacoes = transacoes.filter(t => 
+                            t.contaId !== id && t.contaOrigemId !== id && t.contaDestinoId !== id
+                        );
+                        salvarContas();
+                        salvarTransacoes();
+                        renderizarListaContasModal();
+                        atualizarTudo();
+                    }
+                });
+            });
+        }
+
+        function renderizarTransacoes() {
+            const ordenadas = [...transacoes].sort((a,b) => new Date(b.data) - new Date(a.data));
+            listaTransacoesUl.innerHTML = '';
+            if (ordenadas.length === 0) {
+                listaTransacoesUl.innerHTML = '<li style="justify-content:center; opacity:0.6;">Nenhum lançamento</li>';
+                return;
+            }
+            ordenadas.slice(0, 15).forEach(t => {
+                const li = document.createElement('li');
+                let descricao = '';
+                let valorFormatado = '';
+                let cor = '#000';
+
+                if (t.tipo === 'despesa') {
+                    const conta = contas.find(c => c.id === t.contaId);
+                    descricao = `${t.categoria} (${conta?.nome || 'Conta'})`;
+                    valorFormatado = `- ${formatarMoeda(t.valor)}`;
+                    cor = '#dc2626';
+                } else if (t.tipo === 'receita') {
+                    const conta = contas.find(c => c.id === t.contaId);
+                    descricao = `Receita: ${t.categoria} (${conta?.nome || 'Conta'})`;
+                    valorFormatado = `+ ${formatarMoeda(t.valor)}`;
+                    cor = '#10b981';
+                } else if (t.tipo === 'transferencia') {
+                    const origem = contas.find(c => c.id === t.contaOrigemId);
+                    const destino = contas.find(c => c.id === t.contaDestinoId);
+                    descricao = `Transferência: ${origem?.nome} → ${destino?.nome}`;
+                    valorFormatado = formatarMoeda(t.valor);
+                    cor = '#6b7280';
+                }
+
+                const dataFormatada = new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                li.innerHTML = `
+                    <span><strong>${descricao}</strong><br><small>${dataFormatada}</small></span>
+                    <span style="font-weight:bold; color:${cor};">${valorFormatado}</span>
+                `;
+                listaTransacoesUl.appendChild(li);
+            });
+        }
+
+        function atualizarGrafico() {
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+
+            const despesasMes = transacoes.filter(t => {
+                if (t.tipo !== 'despesa') return false;
+                const d = new Date(t.data + 'T00:00:00');
+                return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+            });
+
+            const totais = {};
+            despesasMes.forEach(d => {
+                totais[d.categoria] = (totais[d.categoria] || 0) + d.valor;
+            });
+
+            const labels = Object.keys(totais);
+            const valores = Object.values(totais);
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['Sem despesas'],
+                    datasets: [{
+                        data: valores.length ? valores : [1],
+                        backgroundColor: ['#f97316','#3b82f6','#10b981','#8b5cf6','#ec4899','#94a3b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function definirDataHoje() {
+            const hoje = new Date();
+            dataAtualP.textContent = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            if (!dataGastoInput.value) {
+                const ano = hoje.getFullYear();
+                const mes = String(hoje.getMonth() + 1).padStart(2,'0');
+                const dia = String(hoje.getDate()).padStart(2,'0');
+                dataGastoInput.value = `${ano}-${mes}-${dia}`;
+            }
+        }
+
+        function atualizarTudo() {
+            atualizarSelectContas();
+            saldoTotalH2.textContent = formatarMoeda(calcularSaldoTotal());
+            renderizarTransacoes();
+            atualizarGrafico();
+        }
+
+        // ---------- INICIALIZAÇÃO ----------
+        function init() {
+            carregarDados();
+            definirDataHoje();
+            atualizarTudo();
+
+            // Evento: Adicionar Despesa
+            btnAdicionarDespesa.addEventListener('click', () => {
+                const contaId = selectContaTransacao.value;
+                if (!contaId) {
+                    alert('Selecione uma conta.');
+                    return;
+                }
+                const valor = parseFloat(valorGastoInput.value);
+                if (isNaN(valor) || valor <= 0) {
+                    alert('Valor inválido.');
+                    return;
+                }
+                const categoria = categoriaGastoSelect.value;
+                const data = dataGastoInput.value;
+                if (!data) {
+                    alert('Data inválida.');
+                    return;
+                }
+
+                const novaTransacao = {
+                    id: gerarId(),
+                    tipo: 'despesa',
+                    valor,
+                    categoria,
+                    data,
+                    contaId
+                };
+                transacoes.push(novaTransacao);
+                salvarTransacoes();
+                valorGastoInput.value = '';
+                atualizarTudo();
+            });
+
+            // Modal: Abrir
+            btnGerenciarContas.addEventListener('click', () => {
+                renderizarListaContasModal();
+                modalOverlay.style.display = 'flex';
+            });
+
+            // Modal: Fechar
+            btnFecharModal.addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+            });
+
+            // Modal: Criar Conta
+            btnCriarConta.addEventListener('click', () => {
+                const nome = novaContaNome.value.trim();
+                if (!nome) {
+                    alert('Digite um nome para a conta.');
+                    return;
+                }
+                const saldoInicial = parseFloat(novaContaSaldoInicial.value) || 0;
+                const incluir = novaContaIncluirTotal.checked;
+
+                const novaConta = {
+                    id: gerarId(),
+                    nome,
+                    saldoInicial,
+                    incluirNoTotal: incluir
+                };
+                contas.push(novaConta);
+                salvarContas();
+                
+                // Limpar campos
+                novaContaNome.value = '';
+                novaContaSaldoInicial.value = '0';
+                novaContaIncluirTotal.checked = true;
+                
+                renderizarListaContasModal();
+                atualizarTudo();
+            });
+
+            // Limpar tudo
+            btnLimparTudo.addEventListener('click', () => {
+                if (confirm('Apagar TODOS os dados (contas e transações)?')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            });
+
+            // Fechar modal clicando fora
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) modalOverlay.style.display = 'none';
+            });
+        }
+
+        // Iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
 </script>
 </body>
 </html>
