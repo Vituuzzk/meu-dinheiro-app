@@ -45,7 +45,7 @@
         }
         .mes-navegacao {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
         .mes-navegacao button {
             background: white;
@@ -55,6 +55,7 @@
             font-size: 14px;
             width: auto;
             margin: 0;
+            color: #374151;
         }
 
         /* Cards */
@@ -151,7 +152,7 @@
             font-weight: 600;
             margin-bottom: 2px;
         }
-        .conta-detalhes .tipo {
+        .conta-detalhes .subtitulo {
             font-size: 12px;
             color: #6b7280;
         }
@@ -161,11 +162,16 @@
         }
 
         /* Cartões */
-        .cartao-resumo {
+        .cartao-resumo-item {
             background: #f8fafc;
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 12px;
+        }
+        .cartao-resumo-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
         .empty-state {
             text-align: center;
@@ -309,6 +315,18 @@
             background: #f3f4f6;
             color: #dc2626;
         }
+        #lista-transacoes-tela {
+            list-style: none;
+            padding: 0;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        #lista-transacoes-tela li {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
@@ -324,7 +342,6 @@
             </div>
         </div>
 
-        <!-- Saldo em contas -->
         <div class="saldo-destaque">
             <div class="saldo-label">Saldo em contas</div>
             <div class="saldo-valor" id="saldo-total-valor">R$ 0,00</div>
@@ -340,16 +357,15 @@
             </div>
         </div>
 
-        <!-- Contas -->
         <div class="card">
             <div class="card-header">
                 <h3>Contas</h3>
                 <a href="#" id="ver-todas-contas">Ver todas</a>
             </div>
             <div id="lista-contas-resumo"></div>
+            <div id="total-contas-resumo" style="margin-top: 12px; font-weight: 700; text-align: right; border-top: 1px solid #eee; padding-top: 12px;"></div>
         </div>
 
-        <!-- Cartões de Crédito -->
         <div class="card">
             <div class="card-header">
                 <h3>Cartões de crédito</h3>
@@ -358,7 +374,6 @@
             <div id="cartoes-resumo-container"></div>
         </div>
 
-        <!-- Despesas por categoria -->
         <div class="card">
             <div class="card-header">
                 <h3>Despesas por categoria</h3>
@@ -372,7 +387,6 @@
             </div>
         </div>
 
-        <!-- Planejamento mensal -->
         <div class="card">
             <div class="card-header">
                 <h3>Planejamento mensal</h3>
@@ -419,7 +433,7 @@
         </div>
         <div class="card">
             <h3>📜 Histórico</h3>
-            <ul id="lista-transacoes-tela" style="list-style:none; padding:0;"></ul>
+            <ul id="lista-transacoes-tela"></ul>
         </div>
     </div>
 
@@ -466,11 +480,431 @@
 <!-- Botão Flutuante -->
 <button class="fab" id="fab-adicionar">+</button>
 
-<!-- Modal Contas (mesmo de antes, omitido por brevidade mas você já tem o código) -->
+<!-- Modal Contas -->
 <div class="modal-overlay" id="modal-contas">
-    <!-- Conteúdo do modal de contas (igual ao que já temos) -->
+    <div class="modal">
+        <h3>🏦 Gerenciar Contas</h3>
+        <ul class="lista-contas" id="lista-contas-modal"></ul>
+        <hr style="margin: 16px 0;">
+        <h4>➕ Nova Conta</h4>
+        <input type="text" id="nova-conta-nome" placeholder="Nome (ex: Nubank)">
+        <div class="tipo-conta-selector">
+            <label><input type="radio" name="tipo-conta" value="normal" checked> 💰 Conta Normal</label>
+            <label><input type="radio" name="tipo-conta" value="credito"> 💳 Cartão de Crédito</label>
+        </div>
+        <div id="campos-conta-normal">
+            <input type="text" id="nova-conta-saldo-inicial" placeholder="Saldo inicial (R$)" class="moeda" value="0,00">
+            <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;">
+                <input type="checkbox" id="nova-conta-incluir-total" checked> Incluir no Saldo Total
+            </label>
+        </div>
+        <div id="campos-cartao-credito" style="display: none;">
+            <input type="text" id="cartao-limite" placeholder="Limite total (R$)" class="moeda" value="0,00">
+            <input type="number" id="cartao-dia-fechamento" placeholder="Dia de fechamento" min="1" max="31" value="1">
+            <input type="number" id="cartao-dia-vencimento" placeholder="Dia de vencimento" min="1" max="31" value="10">
+        </div>
+        <button id="btn-criar-conta">Criar Conta</button>
+        <button id="btn-fechar-modal" style="background:#9ca3af; margin-top:8px;">Fechar</button>
+    </div>
 </div>
 
 <script>
-    // O SCRIPT COMPLETO ESTÁ NO PRÓXIMO BLOCO
+    (function(){
+        "use strict";
+
+        // ---------- ESTADO ----------
+        let contas = [];
+        let transacoes = [];
+        let mesAtual = new Date().getMonth();
+        let anoAtual = new Date().getFullYear();
+
+        // ---------- ELEMENTOS ----------
+        const mesAtualTitulo = document.getElementById('mes-atual-titulo');
+        const saldoTotalValor = document.getElementById('saldo-total-valor');
+        const totalReceitasMes = document.getElementById('total-receitas-mes');
+        const totalDespesasMes = document.getElementById('total-despesas-mes');
+        const listaContasResumo = document.getElementById('lista-contas-resumo');
+        const totalContasResumo = document.getElementById('total-contas-resumo');
+        const cartoesResumoContainer = document.getElementById('cartoes-resumo-container');
+        const ctx = document.getElementById('grafico-categorias').getContext('2d');
+        const emptyDespesas = document.getElementById('empty-despesas');
+        let chartInstance = null;
+
+        // Elementos da tela de Transações
+        const selectContaTransacao = document.getElementById('conta-transacao');
+        const selectContaDestino = document.getElementById('conta-destino');
+        const tipoTransacaoSelect = document.getElementById('tipo-transacao');
+        const transferenciaCampos = document.getElementById('transferencia-campos');
+        const valorTransacaoInput = document.getElementById('valor-transacao');
+        const categoriaTransacaoSelect = document.getElementById('categoria-transacao');
+        const dataTransacaoInput = document.getElementById('data-transacao');
+        const btnAdicionarTransacao = document.getElementById('btn-adicionar-transacao');
+        const listaTransacoesTela = document.getElementById('lista-transacoes-tela');
+
+        // Modal
+        const modalOverlay = document.getElementById('modal-contas');
+        const btnGerenciarContas = document.getElementById('btn-abrir-modal-contas');
+        const btnFecharModal = document.getElementById('btn-fechar-modal');
+        const listaContasModal = document.getElementById('lista-contas-modal');
+        const novaContaNome = document.getElementById('nova-conta-nome');
+        const camposContaNormal = document.getElementById('campos-conta-normal');
+        const camposCartaoCredito = document.getElementById('campos-cartao-credito');
+        const radioTipoConta = document.getElementsByName('tipo-conta');
+        const novaContaSaldoInicial = document.getElementById('nova-conta-saldo-inicial');
+        const novaContaIncluirTotal = document.getElementById('nova-conta-incluir-total');
+        const cartaoLimite = document.getElementById('cartao-limite');
+        const cartaoDiaFechamento = document.getElementById('cartao-dia-fechamento');
+        const cartaoDiaVencimento = document.getElementById('cartao-dia-vencimento');
+        const btnCriarConta = document.getElementById('btn-criar-conta');
+        const btnLimparTudo = document.getElementById('btn-limpar-tudo');
+
+        // Navegação
+        const telas = {
+            principal: document.getElementById('tela-principal'),
+            transacoes: document.getElementById('tela-transacoes'),
+            planejamento: document.getElementById('tela-planejamento'),
+            mais: document.getElementById('tela-mais')
+        };
+        const menuItems = document.querySelectorAll('.menu-item');
+        const fab = document.getElementById('fab-adicionar');
+
+        // ---------- MÁSCARA DE MOEDA ----------
+        function aplicarMascaraMoeda(event) {
+            let valor = event.target.value.replace(/\D/g, '');
+            if (valor === '') { event.target.value = ''; return; }
+            const numero = parseFloat(valor) / 100;
+            event.target.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function converterMoedaParaFloat(valorFormatado) {
+            if (!valorFormatado) return 0;
+            return parseFloat(valorFormatado.replace(/\./g, '').replace(',', '.')) || 0;
+        }
+        function formatarMoeda(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+        function configurarMascaras() {
+            document.querySelectorAll('.moeda').forEach(input => {
+                input.addEventListener('input', aplicarMascaraMoeda);
+                input.addEventListener('blur', e => { if (e.target.value === '') e.target.value = '0,00'; });
+            });
+        }
+        function gerarId() {
+            return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // ---------- PERSISTÊNCIA ----------
+        function carregarDados() {
+            try {
+                contas = JSON.parse(localStorage.getItem('contas')) || [];
+                transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+            } catch(e) { contas = []; transacoes = []; }
+            if (contas.length === 0) {
+                contas.push({ id: gerarId(), nome: 'Carteira', tipo: 'normal', saldoInicial: 0, incluirNoTotal: true });
+                salvarContas();
+            }
+        }
+        function salvarContas() { localStorage.setItem('contas', JSON.stringify(contas)); }
+        function salvarTransacoes() { localStorage.setItem('transacoes', JSON.stringify(transacoes)); }
+
+        // ---------- CÁLCULOS ----------
+        function calcularFaturaAtual(cartaoId) {
+            return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
+        }
+        function calcularSaldoConta(contaId) {
+            const conta = contas.find(c => c.id === contaId);
+            if (!conta) return 0;
+            if (conta.tipo === 'credito') return -calcularFaturaAtual(contaId);
+            let saldo = conta.saldoInicial;
+            transacoes.forEach(t => {
+                if (t.tipo === 'despesa' && t.contaId === contaId) saldo -= t.valor;
+                else if (t.tipo === 'receita' && t.contaId === contaId) saldo += t.valor;
+                else if (t.tipo === 'transferencia') {
+                    if (t.contaOrigemId === contaId) saldo -= t.valor;
+                    if (t.contaDestinoId === contaId) saldo += t.valor;
+                }
+            });
+            return saldo;
+        }
+        function calcularSaldoTotal() {
+            let total = 0;
+            contas.forEach(c => {
+                if (c.tipo === 'normal' && c.incluirNoTotal) total += calcularSaldoConta(c.id);
+                else if (c.tipo === 'credito') total -= calcularFaturaAtual(c.id);
+            });
+            return total;
+        }
+        function calcularReceitasMes() {
+            return transacoes.filter(t => t.tipo === 'receita' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual)
+                .reduce((s, t) => s + t.valor, 0);
+        }
+        function calcularDespesasMes() {
+            return transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual)
+                .reduce((s, t) => s + t.valor, 0);
+        }
+
+        // ---------- RENDERIZAÇÃO PRINCIPAL ----------
+        function atualizarCabecalhoMes() {
+            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            mesAtualTitulo.textContent = `${meses[mesAtual]} ${anoAtual}`;
+        }
+        function renderizarDashboard() {
+            saldoTotalValor.textContent = formatarMoeda(calcularSaldoTotal());
+            totalReceitasMes.textContent = formatarMoeda(calcularReceitasMes());
+            totalDespesasMes.textContent = formatarMoeda(calcularDespesasMes());
+
+            // Contas normais
+            const contasNormais = contas.filter(c => c.tipo === 'normal');
+            listaContasResumo.innerHTML = '';
+            contasNormais.forEach(c => {
+                const saldo = calcularSaldoConta(c.id);
+                const div = document.createElement('div');
+                div.className = 'conta-item';
+                div.innerHTML = `
+                    <div class="conta-info">
+                        <div class="conta-icone">💰</div>
+                        <div class="conta-detalhes">
+                            <div class="nome">${c.nome}</div>
+                            <div class="subtitulo">${c.incluirNoTotal ? 'Incluída no total' : 'Não incluída'}</div>
+                        </div>
+                    </div>
+                    <div class="conta-saldo" style="color: ${saldo < 0 ? '#dc2626' : '#1f2937'}">${formatarMoeda(saldo)}</div>
+                `;
+                listaContasResumo.appendChild(div);
+            });
+            const totalNormal = contasNormais.reduce((s, c) => s + calcularSaldoConta(c.id), 0);
+            totalContasResumo.innerHTML = `<span>Total</span> <span style="font-weight:700;">${formatarMoeda(totalNormal)}</span>`;
+
+            // Cartões
+            const cartoes = contas.filter(c => c.tipo === 'credito');
+            cartoesResumoContainer.innerHTML = '';
+            if (cartoes.length === 0) {
+                cartoesResumoContainer.innerHTML = `<div class="empty-state"><p>💳 Ops! Você ainda não tem nenhum cartão de crédito cadastrado.</p><button id="btn-adicionar-cartao-vazio" class="btn-outline">ADICIONAR NOVO CARTÃO</button></div>`;
+                document.getElementById('btn-adicionar-cartao-vazio')?.addEventListener('click', () => {
+                    document.querySelector('input[value="credito"]').checked = true;
+                    camposContaNormal.style.display = 'none';
+                    camposCartaoCredito.style.display = 'block';
+                    modalOverlay.style.display = 'flex';
+                });
+            } else {
+                cartoes.forEach(cartao => {
+                    const fatura = calcularFaturaAtual(cartao.id);
+                    const disponivel = cartao.limite - fatura;
+                    const div = document.createElement('div');
+                    div.className = 'cartao-resumo-item';
+                    div.innerHTML = `
+                        <div class="cartao-resumo-header">
+                            <strong>${cartao.nome}</strong>
+                            <span>${formatarMoeda(fatura)}</span>
+                        </div>
+                        <div style="font-size:14px; color:#6b7280;">Limite: ${formatarMoeda(cartao.limite)} | Disponível: ${formatarMoeda(disponivel)}</div>
+                        <div style="font-size:12px; color:#9ca3af; margin-top:6px;">Fecha dia ${cartao.diaFechamento} | Vence dia ${cartao.diaVencimento}</div>
+                    `;
+                    cartoesResumoContainer.appendChild(div);
+                });
+            }
+
+            // Gráfico
+            const despesasMes = transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual);
+            if (despesasMes.length === 0) {
+                document.getElementById('grafico-categorias').style.display = 'none';
+                emptyDespesas.style.display = 'block';
+            } else {
+                document.getElementById('grafico-categorias').style.display = 'block';
+                emptyDespesas.style.display = 'none';
+                const totais = {};
+                despesasMes.forEach(d => { totais[d.categoria] = (totais[d.categoria] || 0) + d.valor; });
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(totais),
+                        datasets: [{
+                            data: Object.values(totais),
+                            backgroundColor: ['#f97316','#3b82f6','#10b981','#8b5cf6','#ec4899','#94a3b8']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+        }
+
+        function renderizarTransacoes() {
+            const ordenadas = [...transacoes].sort((a,b) => new Date(b.timestamp || b.data) - new Date(a.timestamp || a.data));
+            listaTransacoesTela.innerHTML = '';
+            if (ordenadas.length === 0) {
+                listaTransacoesTela.innerHTML = '<li style="justify-content:center; opacity:0.6; padding:20px;">Nenhuma transação</li>';
+                return;
+            }
+            ordenadas.slice(0, 30).forEach(t => {
+                const li = document.createElement('li');
+                let desc = '', valor = '', cor = '#000';
+                const conta = contas.find(c => c.id === t.contaId);
+                if (t.tipo === 'despesa') {
+                    desc = `${t.categoria} (${conta?.nome || '?'})`; valor = `- ${formatarMoeda(t.valor)}`; cor = '#dc2626';
+                } else if (t.tipo === 'receita') {
+                    desc = `${t.categoria} (${conta?.nome || '?'})`; valor = `+ ${formatarMoeda(t.valor)}`; cor = '#10b981';
+                } else {
+                    const dest = contas.find(c => c.id === t.contaDestinoId);
+                    desc = `${conta?.nome} → ${dest?.nome}`; valor = formatarMoeda(t.valor); cor = '#6b7280';
+                }
+                const dataHora = t.timestamp ? new Date(t.timestamp).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : new Date(t.data).toLocaleDateString('pt-BR');
+                li.innerHTML = `<span><strong>${desc}</strong><br><small>${dataHora}</small></span><span style="font-weight:bold; color:${cor};">${valor}</span>`;
+                listaTransacoesTela.appendChild(li);
+            });
+        }
+
+        function atualizarSelects() {
+            const html = contas.map(c => `<option value="${c.id}">${c.tipo==='credito'?'💳':'💰'} ${c.nome} (${formatarMoeda(calcularSaldoConta(c.id))})</option>`).join('');
+            selectContaTransacao.innerHTML = '<option value="">Selecione a conta...</option>' + html;
+            selectContaDestino.innerHTML = '<option value="">Conta destino...</option>' + html;
+        }
+
+        function atualizarTudo() {
+            atualizarCabecalhoMes();
+            renderizarDashboard();
+            renderizarTransacoes();
+            atualizarSelects();
+        }
+
+        // ---------- INICIALIZAÇÃO ----------
+        function init() {
+            carregarDados();
+            configurarMascaras();
+            definirDataHoje();
+            atualizarTudo();
+
+            document.getElementById('mes-anterior').addEventListener('click', () => {
+                if (mesAtual === 0) { mesAtual = 11; anoAtual--; }
+                else mesAtual--;
+                atualizarTudo();
+            });
+            document.getElementById('mes-proximo').addEventListener('click', () => {
+                if (mesAtual === 11) { mesAtual = 0; anoAtual++; }
+                else mesAtual++;
+                atualizarTudo();
+            });
+
+            tipoTransacaoSelect.addEventListener('change', () => {
+                transferenciaCampos.style.display = tipoTransacaoSelect.value === 'transferencia' ? 'block' : 'none';
+                categoriaTransacaoSelect.style.display = tipoTransacaoSelect.value === 'transferencia' ? 'none' : 'block';
+            });
+
+            btnAdicionarTransacao.addEventListener('click', () => {
+                const tipo = tipoTransacaoSelect.value;
+                const contaId = selectContaTransacao.value;
+                if (!contaId) { alert('Selecione uma conta.'); return; }
+                const valor = converterMoedaParaFloat(valorTransacaoInput.value);
+                if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return; }
+                const categoria = tipo === 'transferencia' ? 'Transferência' : categoriaTransacaoSelect.value;
+                const data = dataTransacaoInput.value;
+                if (!data) { alert('Data inválida.'); return; }
+
+                let nova;
+                if (tipo === 'transferencia') {
+                    const destId = selectContaDestino.value;
+                    if (!destId || contaId === destId) { alert('Selecione destino diferente.'); return; }
+                    nova = { id: gerarId(), tipo, valor, categoria, data, timestamp: new Date().toISOString(), contaOrigemId: contaId, contaDestinoId: destId };
+                } else {
+                    nova = { id: gerarId(), tipo, valor, categoria, data, timestamp: new Date().toISOString(), contaId };
+                }
+                transacoes.push(nova);
+                salvarTransacoes();
+                valorTransacaoInput.value = '';
+                atualizarTudo();
+            });
+
+            btnGerenciarContas.addEventListener('click', () => {
+                renderizarListaContasModal();
+                modalOverlay.style.display = 'flex';
+            });
+            btnFecharModal.addEventListener('click', () => modalOverlay.style.display = 'none');
+            document.getElementById('adicionar-cartao-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelector('input[value="credito"]').checked = true;
+                camposContaNormal.style.display = 'none';
+                camposCartaoCredito.style.display = 'block';
+                modalOverlay.style.display = 'flex';
+            });
+            document.getElementById('ver-todas-contas').addEventListener('click', (e) => {
+                e.preventDefault();
+                mostrarTela('mais');
+                btnGerenciarContas.click();
+            });
+
+            radioTipoConta.forEach(r => r.addEventListener('change', () => {
+                const isCredito = document.querySelector('input[name="tipo-conta"]:checked').value === 'credito';
+                camposContaNormal.style.display = isCredito ? 'none' : 'block';
+                camposCartaoCredito.style.display = isCredito ? 'block' : 'none';
+            }));
+
+            btnCriarConta.addEventListener('click', () => {
+                const nome = novaContaNome.value.trim();
+                if (!nome) { alert('Digite um nome.'); return; }
+                const tipo = document.querySelector('input[name="tipo-conta"]:checked').value;
+                let novaConta = { id: gerarId(), nome, tipo };
+                if (tipo === 'normal') {
+                    novaConta.saldoInicial = converterMoedaParaFloat(novaContaSaldoInicial.value);
+                    novaConta.incluirNoTotal = novaContaIncluirTotal.checked;
+                } else {
+                    novaConta.limite = converterMoedaParaFloat(cartaoLimite.value);
+                    novaConta.diaFechamento = parseInt(cartaoDiaFechamento.value) || 1;
+                    novaConta.diaVencimento = parseInt(cartaoDiaVencimento.value) || 10;
+                }
+                contas.push(novaConta);
+                salvarContas();
+                novaContaNome.value = ''; novaContaSaldoInicial.value = '0,00'; cartaoLimite.value = '0,00';
+                modalOverlay.style.display = 'none';
+                atualizarTudo();
+            });
+
+            btnLimparTudo.addEventListener('click', () => {
+                if (confirm('Apagar TUDO?')) { localStorage.clear(); location.reload(); }
+            });
+
+            // Navegação
+            function mostrarTela(id) {
+                Object.values(telas).forEach(t => t.classList.remove('ativa'));
+                telas[id].classList.add('ativa');
+                menuItems.forEach(item => item.classList.toggle('ativo', item.dataset.tela === id));
+                if (id === 'principal') atualizarTudo();
+                if (id === 'transacoes') { renderizarTransacoes(); atualizarSelects(); }
+            }
+            menuItems.forEach(item => item.addEventListener('click', () => mostrarTela(item.dataset.tela)));
+            fab.addEventListener('click', () => { mostrarTela('transacoes'); setTimeout(() => valorTransacaoInput.focus(), 100); });
+            document.getElementById('btn-definir-planejamento').addEventListener('click', () => mostrarTela('planejamento'));
+
+            modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
+        }
+
+        function definirDataHoje() {
+            const hoje = new Date();
+            if (!dataTransacaoInput.value) {
+                const ano = hoje.getFullYear(), mes = String(hoje.getMonth()+1).padStart(2,'0'), dia = String(hoje.getDate()).padStart(2,'0');
+                dataTransacaoInput.value = `${ano}-${mes}-${dia}`;
+            }
+        }
+
+        function renderizarListaContasModal() {
+            listaContasModal.innerHTML = '';
+            contas.forEach(c => {
+                const saldo = calcularSaldoConta(c.id);
+                const li = document.createElement('li');
+                li.innerHTML = `<div><strong>${c.nome}</strong> (${c.tipo==='credito'?'💳 Cartão':'💰 Conta'})<br><small>${formatarMoeda(saldo)}</small></div>
+                                <button data-id="${c.id}" class="btn-excluir-conta" style="width:auto; background:#ef4444;">🗑️</button>`;
+                li.querySelector('button').addEventListener('click', () => {
+                    if (confirm('Excluir conta?')) {
+                        contas = contas.filter(co => co.id !== c.id);
+                        transacoes = transacoes.filter(t => t.contaId !== c.id && t.contaOrigemId !== c.id && t.contaDestinoId !== c.id);
+                        salvarContas(); salvarTransacoes();
+                        renderizarListaContasModal(); atualizarTudo();
+                    }
+                });
+                listaContasModal.appendChild(li);
+            });
+        }
+
+        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+    })();
 </script>
+</body>
+</html>
