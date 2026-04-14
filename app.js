@@ -9,6 +9,7 @@
 
     // ---------- ELEMENTOS ----------
     const mesAtualTitulo = document.getElementById('mes-atual-titulo');
+    const mesTransacoesTituloNovo = document.getElementById('mes-transacoes-titulo-novo');
     const saldoTotalValor = document.getElementById('saldo-total-valor');
     const totalReceitasMes = document.getElementById('total-receitas-mes');
     const totalDespesasMes = document.getElementById('total-despesas-mes');
@@ -47,7 +48,6 @@
     const cartaoDiaVencimento = document.getElementById('cartao-dia-vencimento');
     const btnCriarConta = document.getElementById('btn-criar-conta');
     const btnLimparTudo = document.getElementById('btn-limpar-tudo');
-    const btnToggleTema = document.getElementById('btn-toggle-tema');
 
     const telas = {
         principal: document.getElementById('tela-principal'),
@@ -58,12 +58,15 @@
     const menuItems = document.querySelectorAll('.menu-item');
     const fab = document.getElementById('fab-adicionar');
 
-    // Novos elementos da tela "Mais"
     const abasBtns = document.querySelectorAll('.aba-btn');
     const abasConteudos = document.querySelectorAll('.aba-conteudo');
     const btnAbrirConfig = document.getElementById('btn-abrir-configuracoes');
     const telaConfiguracoes = document.getElementById('tela-configuracoes');
     const btnVoltarConfig = document.getElementById('btn-voltar-configuracoes');
+
+    // Novos botões de navegação
+    const btnMesTransacoesAnteriorNovo = document.getElementById('mes-transacoes-anterior-novo');
+    const btnMesTransacoesProximoNovo = document.getElementById('mes-transacoes-proximo-novo');
 
     // ---------- MÁSCARA ----------
     function aplicarMascaraMoeda(e) {
@@ -160,8 +163,11 @@
     function atualizarCabecalhoMes() {
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         mesAtualTitulo.textContent = `${meses[mesAtual]} ${anoAtual}`;
-        document.getElementById('mes-transacoes-titulo').textContent = `${meses[mesAtual]} ${anoAtual}`;
+        if (mesTransacoesTituloNovo) {
+            mesTransacoesTituloNovo.textContent = `${meses[mesAtual]} ${anoAtual}`;
+        }
     }
+
     function renderizarDashboard() {
         saldoTotalValor.textContent = formatarMoeda(calcularSaldoTotal());
         totalReceitasMes.textContent = formatarMoeda(calcularReceitasMes());
@@ -173,14 +179,7 @@
             const saldo = calcularSaldoConta(c.id);
             const div = document.createElement('div');
             div.className = 'conta-item';
-            div.innerHTML = `<div class="conta-info">
-                <div class="conta-icone">${renderizarIconeConta(c.nome)}</div>
-                <div class="conta-detalhes">
-                    <div class="nome">${c.nome}</div>
-                    <div class="subtitulo">${c.incluirNoTotal ? 'Incluída' : 'Não incluída'}</div>
-                </div>
-            </div>
-            <div class="conta-saldo" style="color: ${saldo < 0 ? '#dc2626' : '#1f2937'}">${formatarMoeda(saldo)}</div>`;
+            div.innerHTML = `<div class="conta-info"><div class="conta-icone">${renderizarIconeConta(c.nome)}</div><div class="conta-detalhes"><div class="nome">${c.nome}</div><div class="subtitulo">${c.incluirNoTotal ? 'Incluída' : 'Não incluída'}</div></div></div><div class="conta-saldo" style="color: ${saldo < 0 ? '#dc2626' : '#1f2937'}">${formatarMoeda(saldo)}</div>`;
             listaContasResumo.appendChild(div);
         });
         const totalNormal = contasNormais.reduce((s, c) => s + calcularSaldoConta(c.id), 0);
@@ -263,8 +262,7 @@
             }
             container.innerHTML = html;
         }
-        document.getElementById('saldo-atual-transacoes').textContent = formatarMoeda(calcularSaldoTotal());
-        document.getElementById('balanco-mensal-transacoes').textContent = formatarMoeda(calcularReceitasMes() - calcularDespesasMes());
+        // Removidas as atualizações de saldo/balanço na tela Transações
     }
 
     function atualizarSelectModal() {
@@ -300,14 +298,7 @@
         contas.forEach(c => {
             const saldo = calcularSaldoConta(c.id);
             const li = document.createElement('li');
-            li.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
-                <span>${renderizarIconeConta(c.nome)}</span>
-                <div>
-                    <strong>${c.nome}</strong> (${c.tipo==='credito'?'💳':'💰'})<br>
-                    <small>${formatarMoeda(saldo)}</small>
-                </div>
-            </div>
-            <button data-id="${c.id}" style="width:auto; background:#ef4444;">🗑️</button>`;
+            li.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;"><span>${renderizarIconeConta(c.nome)}</span><div><strong>${c.nome}</strong> (${c.tipo==='credito'?'💳':'💰'})<br><small>${formatarMoeda(saldo)}</small></div></div><button data-id="${c.id}" style="width:auto; background:#ef4444;">🗑️</button>`;
             li.querySelector('button').addEventListener('click', () => {
                 if (confirm('Excluir?')) {
                     contas = contas.filter(co => co.id !== c.id);
@@ -320,44 +311,9 @@
         });
     }
 
-    // ---------- TEMA ESCURO ----------
-    function aplicarTema(escuro) {
-        if (escuro) {
-            document.body.classList.add('dark-theme');
-            if (btnToggleTema) {
-                btnToggleTema.innerHTML = '☀️ Alternar para Tema Claro';
-                btnToggleTema.style.background = '#1976d2';
-            }
-        } else {
-            document.body.classList.remove('dark-theme');
-            if (btnToggleTema) {
-                btnToggleTema.innerHTML = '🌙 Alternar para Tema Escuro';
-                btnToggleTema.style.background = '#6b7280';
-            }
-        }
-        localStorage.setItem('temaEscuro', escuro);
-        
-        if (chartInstance) {
-            const canvas = document.getElementById('grafico-categorias');
-            if (canvas.style.display !== 'none') {
-                const tipo = chartInstance.config.type;
-                const dados = chartInstance.data;
-                const opcoes = chartInstance.options;
-                chartInstance.destroy();
-                chartInstance = new Chart(ctx, { type: tipo, data: dados, options: opcoes });
-            }
-        }
-    }
-
     // ---------- BACKUP ----------
     function exportarBackup() {
-        const backup = {
-            versao: '1.0',
-            data: new Date().toISOString(),
-            contas: contas,
-            transacoes: transacoes,
-            preferencias: { temaEscuro: document.body.classList.contains('dark-theme') }
-        };
+        const backup = { versao: '1.0', data: new Date().toISOString(), contas, transacoes };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -381,14 +337,10 @@
                 if (confirm('Importar backup substituirá todos os dados atuais. Continuar?')) {
                     contas = backup.contas;
                     transacoes = backup.transacoes;
-                    salvarContas();
-                    salvarTransacoes();
-                    if (backup.preferencias) aplicarTema(backup.preferencias.temaEscuro);
+                    salvarContas(); salvarTransacoes();
                     location.reload();
                 }
-            } catch (error) {
-                alert('❌ Arquivo de backup inválido.');
-            }
+            } catch (error) { alert('❌ Arquivo de backup inválido.'); }
             event.target.value = '';
         };
         reader.readAsText(file);
@@ -402,14 +354,6 @@
         renderizarDashboard();
         renderizarTransacoesAgrupadas();
 
-        const temaSalvo = localStorage.getItem('temaEscuro') === 'true';
-        aplicarTema(temaSalvo);
-        if (btnToggleTema) {
-            btnToggleTema.addEventListener('click', () => {
-                aplicarTema(!document.body.classList.contains('dark-theme'));
-            });
-        }
-
         document.getElementById('mes-anterior').addEventListener('click', () => {
             if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
             atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
@@ -418,14 +362,19 @@
             if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
             atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
         });
-        document.getElementById('mes-transacoes-anterior').addEventListener('click', () => {
-            if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
-        });
-        document.getElementById('mes-transacoes-proximo').addEventListener('click', () => {
-            if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
-        });
+
+        if (btnMesTransacoesAnteriorNovo) {
+            btnMesTransacoesAnteriorNovo.addEventListener('click', () => {
+                if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
+                atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
+            });
+        }
+        if (btnMesTransacoesProximoNovo) {
+            btnMesTransacoesProximoNovo.addEventListener('click', () => {
+                if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
+                atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
+            });
+        }
 
         tipoReceitaBtn.addEventListener('click', () => {
             tipoTransacaoAtual = 'receita'; modalTitulo.textContent = 'Nova receita';
@@ -459,9 +408,7 @@
             renderizarTransacoesAgrupadas();
         });
 
-        if (btnGerenciarContas) {
-            btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); modalOverlay.style.display = 'flex'; });
-        }
+        btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); modalOverlay.style.display = 'flex'; });
         btnFecharModal.addEventListener('click', () => modalOverlay.style.display = 'none');
         document.getElementById('adicionar-cartao-link').addEventListener('click', (e) => {
             e.preventDefault();
@@ -513,70 +460,42 @@
         modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) modalTransacao.style.display = 'none'; });
 
         // Backup
-        const btnExportarBackup = document.getElementById('btn-exportar-backup');
-        const btnImportarBackup = document.getElementById('btn-importar-backup');
-        const inputImportarBackup = document.getElementById('input-importar-backup');
-        if (btnExportarBackup) btnExportarBackup.addEventListener('click', exportarBackup);
-        if (btnImportarBackup) btnImportarBackup.addEventListener('click', () => inputImportarBackup?.click());
-        if (inputImportarBackup) inputImportarBackup.addEventListener('change', importarBackup);
+        document.getElementById('btn-exportar-backup').addEventListener('click', exportarBackup);
+        document.getElementById('btn-importar-backup').addEventListener('click', () => {
+            document.getElementById('input-importar-backup').click();
+        });
+        document.getElementById('input-importar-backup').addEventListener('change', importarBackup);
 
-        // Controle das Abas na tela Mais
-        if (abasBtns.length > 0) {
-            abasBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const aba = btn.dataset.aba;
-                    abasBtns.forEach(b => b.classList.remove('ativo'));
-                    abasConteudos.forEach(c => c.classList.remove('ativo'));
-                    btn.classList.add('ativo');
-                    document.getElementById(`aba-${aba}`).classList.add('ativo');
-                });
+        // Abas
+        abasBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const aba = btn.dataset.aba;
+                abasBtns.forEach(b => b.classList.remove('ativo'));
+                abasConteudos.forEach(c => c.classList.remove('ativo'));
+                btn.classList.add('ativo');
+                document.getElementById(`aba-${aba}`).classList.add('ativo');
             });
-        }
+        });
 
-        // Ações dos itens da lista
+        // Ações da lista
         document.querySelectorAll('.lista-opcoes').forEach(lista => {
             lista.addEventListener('click', (e) => {
                 const opcao = e.target.closest('.opcao-item');
                 if (!opcao) return;
                 const acao = opcao.dataset.acao;
                 switch (acao) {
-                    case 'contas':
-                        renderizarListaContasModal();
-                        modalOverlay.style.display = 'flex';
-                        break;
-                    case 'cartoes':
-                        document.querySelector('input[value="credito"]').checked = true;
-                        camposContaNormal.style.display = 'none';
-                        camposCartaoCredito.style.display = 'block';
-                        modalOverlay.style.display = 'flex';
-                        break;
-                    case 'exportar-excel':
-                        if (typeof exportarParaCSV === 'function') exportarParaCSV();
-                        else alert('Função de exportação Excel será carregada.');
-                        break;
-                    case 'backup-exportar':
-                        exportarBackup();
-                        break;
-                    case 'backup-importar':
-                        document.getElementById('input-importar-backup')?.click();
-                        break;
-                    default:
-                        alert(`Funcionalidade "${acao}" em breve!`);
+                    case 'contas': renderizarListaContasModal(); modalOverlay.style.display = 'flex'; break;
+                    case 'cartoes': document.querySelector('input[value="credito"]').checked = true; camposContaNormal.style.display = 'none'; camposCartaoCredito.style.display = 'block'; modalOverlay.style.display = 'flex'; break;
+                    case 'exportar-excel': if (typeof exportarParaCSV === 'function') exportarParaCSV(); else alert('Em breve'); break;
+                    case 'backup-exportar': exportarBackup(); break;
+                    case 'backup-importar': document.getElementById('input-importar-backup')?.click(); break;
+                    default: alert(`"${acao}" em breve!`);
                 }
             });
         });
 
-        // Abrir tela de Configurações
-        if (btnAbrirConfig) {
-            btnAbrirConfig.addEventListener('click', () => {
-                if (telaConfiguracoes) telaConfiguracoes.style.display = 'block';
-            });
-        }
-        if (btnVoltarConfig) {
-            btnVoltarConfig.addEventListener('click', () => {
-                if (telaConfiguracoes) telaConfiguracoes.style.display = 'none';
-            });
-        }
+        btnAbrirConfig.addEventListener('click', () => { telaConfiguracoes.style.display = 'block'; });
+        btnVoltarConfig.addEventListener('click', () => { telaConfiguracoes.style.display = 'none'; });
     }
 
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
