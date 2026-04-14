@@ -323,7 +323,42 @@
 </div>
 
 <script>
-    // O script será o mesmo da versão anterior, com pequenas adaptações para navegação.
-    // Para não alongar muito, vou colocar a parte principal. Você pode usar o script completo do cartão de crédito anterior.
-    // A única diferença é adicionar a lógica de navegação e FAB.
+    // ---------- NAVEGAÇÃO ----------
+const telas = {
+    principal: document.getElementById('tela-principal'),
+    transacoes: document.getElementById('tela-transacoes'),
+    planejamento: document.getElementById('tela-planejamento'),
+    mais: document.getElementById('tela-mais')
+};
+const menuItems = document.querySelectorAll('.menu-item');
+const fab = document.getElementById('fab-adicionar');
+
+function mostrarTela(telaId) {
+    Object.values(telas).forEach(t => t.classList.remove('ativa'));
+    telas[telaId].classList.add('ativa');
+    
+    menuItems.forEach(item => {
+        item.classList.toggle('ativo', item.dataset.tela === telaId);
+    });
+}
+
+menuItems.forEach(item => {
+    item.addEventListener('click', () => mostrarTela(item.dataset.tela));
+});
+
+fab.addEventListener('click', () => {
+    mostrarTela('transacoes');
+    // Opcional: focar no campo de valor
+    setTimeout(() => valorTransacaoInput.focus(), 100);
+});
+
+// Botão do modal na tela "Mais"
+document.getElementById('btn-abrir-modal-contas').addEventListener('click', () => {
+    renderizarListaContasModal();
+    modalOverlay.style.display = 'flex';
+});
+
+// Adaptação: renderizar transações também na tela de Transações
+const listaTransacoesTela = document.getElementById('lista-transacoes-tela');
+// Modifique a função renderizarTransacoes() para preencher ambas as listas
 </script>
