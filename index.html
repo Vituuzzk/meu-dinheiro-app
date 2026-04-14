@@ -184,7 +184,7 @@
 
     <!-- Últimos Lançamentos -->
     <div class="card">
-        <h3>📋 Últimos Lançamentos</h3>
+        <h3>📋 Histórico de Lançamentos</h3>
         <ul id="lista-transacoes"></ul>
         <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
     </div>
@@ -362,7 +362,7 @@
         }
 
         function renderizarTransacoes() {
-            const ordenadas = [...transacoes].sort((a,b) => new Date(b.data) - new Date(a.data));
+            const ordenadas = [...transacoes].sort((a,b) => new Date(b.timestamp || b.data) - new Date(a.timestamp || a.data));
             listaTransacoesUl.innerHTML = '';
             if (ordenadas.length === 0) {
                 listaTransacoesUl.innerHTML = '<li style="justify-content:center; opacity:0.6;">Nenhum lançamento</li>';
@@ -392,9 +392,22 @@
                     cor = '#6b7280';
                 }
 
-                const dataFormatada = new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                // Exibe data e hora se disponível, senão apenas data
+                let dataHoraExibicao;
+                if (t.timestamp) {
+                    dataHoraExibicao = new Date(t.timestamp).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } else {
+                    dataHoraExibicao = new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                }
+
                 li.innerHTML = `
-                    <span><strong>${descricao}</strong><br><small>${dataFormatada}</small></span>
+                    <span><strong>${descricao}</strong><br><small>${dataHoraExibicao}</small></span>
                     <span style="font-weight:bold; color:${cor};">${valorFormatado}</span>
                 `;
                 listaTransacoesUl.appendChild(li);
@@ -461,7 +474,7 @@
             definirDataHoje();
             atualizarTudo();
 
-            // Evento: Adicionar Despesa
+            // Evento: Adicionar Despesa (com timestamp automático)
             btnAdicionarDespesa.addEventListener('click', () => {
                 const contaId = selectContaTransacao.value;
                 if (!contaId) {
@@ -480,12 +493,15 @@
                     return;
                 }
 
+                const agora = new Date(); // 🕒 Captura data/hora atuais
+
                 const novaTransacao = {
                     id: gerarId(),
                     tipo: 'despesa',
                     valor,
                     categoria,
                     data,
+                    timestamp: agora.toISOString(),
                     contaId
                 };
                 transacoes.push(novaTransacao);
