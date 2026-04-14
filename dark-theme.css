@@ -1,34 +1,155 @@
-body.dark-theme { background: #0a1c1a; }
-body.dark-theme .cabecalho-mes h1 { color: #6ee7b7; }
-body.dark-theme .mes-navegacao button { background: #064e3b; border-color: #047857; color: #a7f3d0; }
-body.dark-theme .card { background: #064e3b; border-color: #047857; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-body.dark-theme .card-header h3 { color: #a7f3d0; }
-body.dark-theme .card-header a { color: #34d399; }
-body.dark-theme .saldo-destaque { background: linear-gradient(145deg, #047857, #065f46); }
-body.dark-theme .saldo-label { color: #a7f3d0; }
-body.dark-theme .resumo-item .label { color: #6ee7b7; }
-body.dark-theme .conta-item { border-bottom-color: #047857; }
-body.dark-theme .conta-icone { background: #065f46; color: #34d399; }
-body.dark-theme .conta-detalhes .nome { color: #d1fae5; }
-body.dark-theme .conta-detalhes .subtitulo { color: #6ee7b7; }
-body.dark-theme .conta-saldo { color: #a7f3d0; }
-body.dark-theme .cartao-resumo-item { background: #0a1c1a; }
-body.dark-theme .cartao-resumo-header strong { color: #d1fae5; }
-body.dark-theme .empty-state { color: #6ee7b7; }
-body.dark-theme .btn-outline { border-color: #34d399; color: #34d399; }
-body.dark-theme .menu-inferior { background: #064e3b; border-top-color: #047857; }
-body.dark-theme .menu-item { color: #34d399; }
-body.dark-theme .menu-item.ativo { color: #059669; background: #0a1c1a; }
-body.dark-theme .fab { background: #059669; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
-body.dark-theme .modal { background: #064e3b; }
-body.dark-theme .modal h3, body.dark-theme .modal h2, body.dark-theme .modal h4 { color: #d1fae5; }
-body.dark-theme .modal label { color: #a7f3d0; }
-body.dark-theme .modal input, body.dark-theme .modal select { background: #0a1c1a; border-color: #047857; color: #d1fae5; }
-body.dark-theme .modal input::placeholder { color: #6ee7b7; }
-body.dark-theme .lista-contas li { border-bottom-color: #047857; }
-body.dark-theme .grupo-data { background: #0a1c1a; color: #a7f3d0; border-bottom-color: #047857; }
-body.dark-theme .transacao-item { background: #064e3b; border-bottom-color: #047857; }
-body.dark-theme .transacao-icone { background: #065f46; color: #34d399; }
-body.dark-theme .transacao-descricao { color: #d1fae5; }
-body.dark-theme .transacao-conta { color: #6ee7b7; }
-body.dark-theme .btn-perigo { background: #450a0a; color: #fca5a5; }
+/* Tema Escuro - Meu Dinheiro (Azul e Preto Fosco) */
+body.dark-theme {
+    background: #121212; /* Preto fosco */
+}
+
+body.dark-theme .cabecalho-mes h1 {
+    color: #e0e0e0;
+}
+
+body.dark-theme .mes-navegacao button {
+    background: #1E1E1E;
+    border-color: #333333;
+    color: #bbdefb; /* Azul claro */
+}
+
+body.dark-theme .card {
+    background: #1E1E1E;
+    border-color: #333333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+body.dark-theme .card-header h3 {
+    color: #bbdefb;
+}
+
+body.dark-theme .card-header a {
+    color: #42a5f5; /* Azul mais vibrante */
+}
+
+body.dark-theme .saldo-destaque {
+    background: linear-gradient(145deg, #102a4c, #0a1a30);
+}
+
+body.dark-theme .saldo-label {
+    color: #90caf9;
+}
+
+body.dark-theme .resumo-item .label {
+    color: #90caf9;
+}
+
+body.dark-theme .conta-item {
+    border-bottom-color: #333333;
+}
+
+body.dark-theme .conta-icone {
+    background: #1a3a5c;
+    color: #64b5f6;
+}
+
+body.dark-theme .conta-detalhes .nome {
+    color: #e0e0e0;
+}
+
+body.dark-theme .conta-detalhes .subtitulo {
+    color: #90caf9;
+}
+
+body.dark-theme .conta-saldo {
+    color: #ffffff;
+}
+
+body.dark-theme .cartao-resumo-item {
+    background: #181818;
+}
+
+body.dark-theme .cartao-resumo-header strong {
+    color: #e0e0e0;
+}
+
+body.dark-theme .empty-state {
+    color: #9e9e9e;
+}
+
+body.dark-theme .btn-outline {
+    border-color: #42a5f5;
+    color: #42a5f5;
+}
+
+body.dark-theme .menu-inferior {
+    background: #1E1E1E;
+    border-top-color: #333333;
+}
+
+body.dark-theme .menu-item {
+    color: #78909c;
+}
+
+body.dark-theme .menu-item.ativo {
+    color: #42a5f5;
+    background: #1a3a5c;
+}
+
+body.dark-theme .fab {
+    background: #1976d2; /* Azul padrão */
+    box-shadow: 0 4px 12px rgba(25,118,210,0.3);
+}
+
+body.dark-theme .modal {
+    background: #1E1E1E;
+}
+
+body.dark-theme .modal h3,
+body.dark-theme .modal h2,
+body.dark-theme .modal h4 {
+    color: #e0e0e0;
+}
+
+body.dark-theme .modal label {
+    color: #b0bec5;
+}
+
+body.dark-theme .modal input,
+body.dark-theme .modal select {
+    background: #121212;
+    border-color: #333333;
+    color: #e0e0e0;
+}
+
+body.dark-theme .modal input::placeholder {
+    color: #78909c;
+}
+
+body.dark-theme .lista-contas li {
+    border-bottom-color: #333333;
+}
+
+body.dark-theme .grupo-data {
+    background: #181818;
+    color: #bbdefb;
+    border-bottom-color: #333333;
+}
+
+body.dark-theme .transacao-item {
+    background: #1E1E1E;
+    border-bottom-color: #333333;
+}
+
+body.dark-theme .transacao-icone {
+    background: #1a3a5c;
+    color: #64b5f6;
+}
+
+body.dark-theme .transacao-descricao {
+    color: #e0e0e0;
+}
+
+body.dark-theme .transacao-conta {
+    color: #90caf9;
+}
+
+body.dark-theme .btn-perigo {
+    background: #4a1515;
+    color: #ef9a9a;
+}
