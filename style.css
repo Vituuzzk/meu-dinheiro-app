@@ -250,3 +250,79 @@ body.dark-theme .config-item .label {
 body.dark-theme .config-item .valor {
     color: #9ca3af;
 }
+/* Nova navegação de mês (Transações) */
+.mes-navegacao-novo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 16px;
+}
+
+.btn-mes-navegacao {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    color: #059669;
+    transition: background 0.2s;
+}
+
+.btn-mes-navegacao:hover {
+    background: #d1fae5;
+}
+
+.mes-navegacao-novo h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #065f46;
+    margin: 0;
+}
+
+/* Tema escuro para a nova navegação */
+body.dark-theme .btn-mes-navegacao {
+    background: #1e1e1e;
+    border-color: #2a2a2a;
+    color: #64b5f6;
+}
+body.dark-theme .btn-mes-navegacao:hover {
+    background: #2a2a2a;
+}
+body.dark-theme .mes-navegacao-novo h2 {
+    color: #e0e0e0;
+}
+
+/* Cards de Placeholder (Em breve) */
+.placeholder-card {
+    opacity: 0.8;
+    border: 1px dashed #a7f3d0;
+    background: #f9fefb;
+}
+body.dark-theme .placeholder-card {
+    border-color: #2a2a2a;
+    background: #181818;
+}
+
+.badge-em-breve {
+    background: #e5e7eb;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+body.dark-theme .badge-em-breve {
+    background: #333;
+    color: #9ca3af;
+}
+
+.placeholder-content {
+    padding: 12px 0 4px;
+}
