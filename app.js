@@ -57,6 +57,11 @@
     };
     const menuItems = document.querySelectorAll('.menu-item');
     const fab = document.getElementById('fab-adicionar');
+    const abasBtns = document.querySelectorAll('.aba-btn');
+const abasConteudos = document.querySelectorAll('.aba-conteudo');
+const btnAbrirConfig = document.getElementById('btn-abrir-configuracoes');
+const telaConfiguracoes = document.getElementById('tela-configuracoes');
+const btnVoltarConfig = document.getElementById('btn-voltar-configuracoes');
 
     // ---------- MÁSCARA ----------
     function aplicarMascaraMoeda(e) {
