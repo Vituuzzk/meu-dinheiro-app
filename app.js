@@ -324,12 +324,16 @@
     function aplicarTema(escuro) {
         if (escuro) {
             document.body.classList.add('dark-theme');
-            btnToggleTema.innerHTML = '☀️ Alternar para Tema Claro';
-            btnToggleTema.style.background = '#1976d2';
+            if (btnToggleTema) {
+                btnToggleTema.innerHTML = '☀️ Alternar para Tema Claro';
+                btnToggleTema.style.background = '#1976d2';
+            }
         } else {
             document.body.classList.remove('dark-theme');
-            btnToggleTema.innerHTML = '🌙 Alternar para Tema Escuro';
-            btnToggleTema.style.background = '#6b7280';
+            if (btnToggleTema) {
+                btnToggleTema.innerHTML = '🌙 Alternar para Tema Escuro';
+                btnToggleTema.style.background = '#6b7280';
+            }
         }
         localStorage.setItem('temaEscuro', escuro);
         
@@ -400,9 +404,11 @@
 
         const temaSalvo = localStorage.getItem('temaEscuro') === 'true';
         aplicarTema(temaSalvo);
-        btnToggleTema.addEventListener('click', () => {
-            aplicarTema(!document.body.classList.contains('dark-theme'));
-        });
+        if (btnToggleTema) {
+            btnToggleTema.addEventListener('click', () => {
+                aplicarTema(!document.body.classList.contains('dark-theme'));
+            });
+        }
 
         document.getElementById('mes-anterior').addEventListener('click', () => {
             if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
@@ -453,7 +459,9 @@
             renderizarTransacoesAgrupadas();
         });
 
-        btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); modalOverlay.style.display = 'flex'; });
+        if (btnGerenciarContas) {
+            btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); modalOverlay.style.display = 'flex'; });
+        }
         btnFecharModal.addEventListener('click', () => modalOverlay.style.display = 'none');
         document.getElementById('adicionar-cartao-link').addEventListener('click', (e) => {
             e.preventDefault();
@@ -505,22 +513,25 @@
         modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) modalTransacao.style.display = 'none'; });
 
         // Backup
-        document.getElementById('btn-exportar-backup').addEventListener('click', exportarBackup);
-        document.getElementById('btn-importar-backup').addEventListener('click', () => {
-            document.getElementById('input-importar-backup').click();
-        });
-        document.getElementById('input-importar-backup').addEventListener('change', importarBackup);
+        const btnExportarBackup = document.getElementById('btn-exportar-backup');
+        const btnImportarBackup = document.getElementById('btn-importar-backup');
+        const inputImportarBackup = document.getElementById('input-importar-backup');
+        if (btnExportarBackup) btnExportarBackup.addEventListener('click', exportarBackup);
+        if (btnImportarBackup) btnImportarBackup.addEventListener('click', () => inputImportarBackup?.click());
+        if (inputImportarBackup) inputImportarBackup.addEventListener('change', importarBackup);
 
         // Controle das Abas na tela Mais
-        abasBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const aba = btn.dataset.aba;
-                abasBtns.forEach(b => b.classList.remove('ativo'));
-                abasConteudos.forEach(c => c.classList.remove('ativo'));
-                btn.classList.add('ativo');
-                document.getElementById(`aba-${aba}`).classList.add('ativo');
+        if (abasBtns.length > 0) {
+            abasBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const aba = btn.dataset.aba;
+                    abasBtns.forEach(b => b.classList.remove('ativo'));
+                    abasConteudos.forEach(c => c.classList.remove('ativo'));
+                    btn.classList.add('ativo');
+                    document.getElementById(`aba-${aba}`).classList.add('ativo');
+                });
             });
-        });
+        }
 
         // Ações dos itens da lista
         document.querySelectorAll('.lista-opcoes').forEach(lista => {
@@ -547,7 +558,7 @@
                         exportarBackup();
                         break;
                     case 'backup-importar':
-                        document.getElementById('input-importar-backup').click();
+                        document.getElementById('input-importar-backup')?.click();
                         break;
                     default:
                         alert(`Funcionalidade "${acao}" em breve!`);
@@ -556,12 +567,16 @@
         });
 
         // Abrir tela de Configurações
-        btnAbrirConfig.addEventListener('click', () => {
-            telaConfiguracoes.style.display = 'block';
-        });
-        btnVoltarConfig.addEventListener('click', () => {
-            telaConfiguracoes.style.display = 'none';
-        });
+        if (btnAbrirConfig) {
+            btnAbrirConfig.addEventListener('click', () => {
+                if (telaConfiguracoes) telaConfiguracoes.style.display = 'block';
+            });
+        }
+        if (btnVoltarConfig) {
+            btnVoltarConfig.addEventListener('click', () => {
+                if (telaConfiguracoes) telaConfiguracoes.style.display = 'none';
+            });
+        }
     }
 
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
