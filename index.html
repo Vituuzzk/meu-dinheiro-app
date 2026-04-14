@@ -6,6 +6,7 @@
     <title>💰 Meu Dinheiro</title>
     <!-- CSS externo -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dark-theme.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
@@ -83,8 +84,9 @@
     <div id="tela-mais" class="tela">
         <div class="cabecalho-mes"><h1>Mais</h1></div>
         <div class="card">
+            <!-- BOTÃO DE ALTERNÂNCIA DE TEMA -->
+            <button id="btn-toggle-tema" style="background: #6b7280;">🌙 Alternar para Tema Escuro</button>
             <button id="btn-abrir-modal-contas">🏦 Gerenciar Contas e Cartões</button>
-            <!-- BOTÃO DE EXPORTAÇÃO ADICIONADO AQUI -->
             <button id="btn-exportar-excel" style="background: #10b981; margin-top: 8px;">📊 Exportar para Excel (CSV)</button>
             <button id="btn-limpar-tudo" class="btn-perigo">🗑️ Limpar Todos os Dados</button>
         </div>
