@@ -1,179 +1,315 @@
-```javascript
-// Aguarda a página carregar completamente
-document.addEventListener('DOMContentLoaded', () => {
-    // Elementos da tela
-    const salarioInput = document.getElementById('salario-input');
-    const btnSalvarSalario = document.getElementById('btn-salvar-salario');
-    const saldoDisponivelH2 = document.getElementById('saldo-disponivel-valor');
-    
-    const valorGasto = document.getElementById('valor-gasto');
-    const categoriaGasto = document.getElementById('categoria-gasto');
-    const dataGasto = document.getElementById('data-gasto');
-    const btnAdicionar = document.getElementById('btn-adicionar');
-    const listaGastosUl = document.getElementById('lista-gastos');
-    const btnLimpar = document.getElementById('btn-limpar');
+(function(){
+    "use strict";
+
+    // ---------- Dados ----------
+    let contas = [];
+    let transacoes = []; // cada transação: { id, tipo, valor, categoria, data, contaId, contaOrigemId?, contaDestinoId? }
+
+    // ---------- Elementos ----------
+    const saldoTotalH2 = document.getElementById('saldo-total-valor');
+    const selectContaTransacao = document.getElementById('conta-transacao');
+    const valorGastoInput = document.getElementById('valor-gasto');
+    const categoriaGastoSelect = document.getElementById('categoria-gasto');
+    const dataGastoInput = document.getElementById('data-gasto');
+    const btnAdicionarDespesa = document.getElementById('btn-adicionar-despesa');
+    const listaTransacoesUl = document.getElementById('lista-transacoes');
+    const btnLimparTudo = document.getElementById('btn-limpar-tudo');
     const dataAtualP = document.getElementById('data-atual');
-
-    // Gráfico (vamos guardar a instância)
-    let chartInstance = null;
     const ctx = document.getElementById('grafico-categorias').getContext('2d');
+    let chartInstance = null;
 
-    // Dados salvos no navegador
-    let salario = parseFloat(localStorage.getItem('salario')) || 0;
-    let gastos = JSON.parse(localStorage.getItem('gastos')) || [];
+    // Modal
+    const modalOverlay = document.getElementById('modal-contas');
+    const btnGerenciarContas = document.getElementById('btn-gerenciar-contas');
+    const btnFecharModal = document.getElementById('btn-fechar-modal');
+    const listaContasModal = document.getElementById('lista-contas-modal');
+    const novaContaNome = document.getElementById('nova-conta-nome');
+    const novaContaSaldoInicial = document.getElementById('nova-conta-saldo-inicial');
+    const novaContaIncluirTotal = document.getElementById('nova-conta-incluir-total');
+    const btnCriarConta = document.getElementById('btn-criar-conta');
 
-    // --- FUNÇÕES AUXILIARES ---
+    // ---------- Funções Auxiliares ----------
     function formatarMoeda(valor) {
         return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function atualizarData() {
-        const hoje = new Date();
-        dataAtualP.textContent = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        // Define data padrão no input de data como hoje
-        if (!dataGasto.value) {
-            const ano = hoje.getFullYear();
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoje.getDate()).padStart(2, '0');
-            dataGasto.value = `${ano}-${mes}-${dia}`;
+    function gerarId() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function carregarDados() {
+        const contasSalvas = localStorage.getItem('contas');
+        contas = contasSalvas ? JSON.parse(contasSalvas) : [];
+        const transacoesSalvas = localStorage.getItem('transacoes');
+        transacoes = transacoesSalvas ? JSON.parse(transacoesSalvas) : [];
+
+        // Se não houver contas, cria uma padrão "Carteira"
+        if (contas.length === 0) {
+            contas.push({
+                id: gerarId(),
+                nome: 'Carteira',
+                saldoInicial: 0,
+                incluirNoTotal: true
+            });
+            salvarContas();
         }
     }
 
-    // Calcula total de gastos do mês atual
-    function calcularTotalGastoMes() {
-        const hoje = new Date();
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-        
-        return gastos.reduce((total, g) => {
-            const dataG = new Date(g.data + 'T00:00:00'); // Evita fuso horário
-            if (dataG.getMonth() === mesAtual && dataG.getFullYear() === anoAtual) {
-                return total + g.valor;
+    function salvarContas() {
+        localStorage.setItem('contas', JSON.stringify(contas));
+    }
+
+    function salvarTransacoes() {
+        localStorage.setItem('transacoes', JSON.stringify(transacoes));
+    }
+
+    // Calcula o saldo atual de uma conta específica
+    function calcularSaldoConta(contaId) {
+        const conta = contas.find(c => c.id === contaId);
+        if (!conta) return 0;
+
+        let saldo = conta.saldoInicial;
+
+        transacoes.forEach(t => {
+            if (t.tipo === 'despesa' && t.contaId === contaId) {
+                saldo -= t.valor;
+            } else if (t.tipo === 'receita' && t.contaId === contaId) {
+                saldo += t.valor;
+            } else if (t.tipo === 'transferencia') {
+                if (t.contaOrigemId === contaId) saldo -= t.valor;
+                if (t.contaDestinoId === contaId) saldo += t.valor;
             }
-            return total;
-        }, 0);
+        });
+        return saldo;
     }
 
-    function atualizarSaldoDisponivel() {
-        const totalGasto = calcularTotalGastoMes();
-        const disponivel = salario - totalGasto;
-        saldoDisponivelH2.textContent = formatarMoeda(disponivel);
-        // Muda cor se estourou orçamento
-        saldoDisponivelH2.style.color = disponivel < 0 ? '#fca5a5' : 'white';
+    // Saldo total (soma dos saldos das contas com incluirNoTotal = true)
+    function calcularSaldoTotal() {
+        return contas
+            .filter(c => c.incluirNoTotal)
+            .reduce((total, conta) => total + calcularSaldoConta(conta.id), 0);
     }
 
-    function atualizarListaGastos() {
-        // Ordena do mais recente para o mais antigo
-        const gastosOrdenados = [...gastos].sort((a, b) => new Date(b.data) - new Date(a.data));
-        listaGastosUl.innerHTML = '';
-        
-        gastosOrdenados.slice(0, 10).forEach(g => {
+    // Preenche o <select> de contas no formulário
+    function atualizarSelectContas() {
+        selectContaTransacao.innerHTML = '<option value="">Selecione a conta...</option>';
+        contas.forEach(conta => {
+            const option = document.createElement('option');
+            option.value = conta.id;
+            option.textContent = `${conta.nome} (${formatarMoeda(calcularSaldoConta(conta.id))})`;
+            selectContaTransacao.appendChild(option);
+        });
+    }
+
+    // Lista as contas no modal
+    function renderizarListaContasModal() {
+        listaContasModal.innerHTML = '';
+        contas.forEach(conta => {
+            const saldo = calcularSaldoConta(conta.id);
             const li = document.createElement('li');
             li.innerHTML = `
-                <span>
-                    <strong>${g.categoria}</strong><br>
-                    <small>${new Date(g.data + 'T00:00:00').toLocaleDateString('pt-BR')}</small>
-                </span>
-                <span style="font-weight: bold;">${formatarMoeda(g.valor)}</span>
+                <div>
+                    <strong>${conta.nome}</strong> ${conta.incluirNoTotal ? '✅' : '❌'}<br>
+                    <small>Saldo: ${formatarMoeda(saldo)}</small>
+                </div>
+                <div class="conta-actions">
+                    <button class="btn-editar-conta" data-id="${conta.id}">✏️</button>
+                    <button class="btn-excluir-conta" data-id="${conta.id}">🗑️</button>
+                </div>
             `;
-            listaGastosUl.appendChild(li);
+            listaContasModal.appendChild(li);
+        });
+
+        // Event listeners para botões de editar/excluir (serão adicionados depois)
+        document.querySelectorAll('.btn-excluir-conta').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                if (confirm('Excluir esta conta? Todas as transações associadas serão perdidas.')) {
+                    contas = contas.filter(c => c.id !== id);
+                    transacoes = transacoes.filter(t => t.contaId !== id && t.contaOrigemId !== id && t.contaDestinoId !== id);
+                    salvarContas();
+                    salvarTransacoes();
+                    atualizarTudo();
+                    renderizarListaContasModal();
+                }
+            });
+        });
+        // Edição pode ser implementada depois (simplificamos)
+    }
+
+    // Renderiza a lista de transações na tela principal
+    function renderizarTransacoes() {
+        const ordenadas = [...transacoes].sort((a,b) => new Date(b.data) - new Date(a.data));
+        listaTransacoesUl.innerHTML = '';
+        ordenadas.slice(0, 15).forEach(t => {
+            const li = document.createElement('li');
+            let descricao = '';
+            if (t.tipo === 'despesa') {
+                const conta = contas.find(c => c.id === t.contaId);
+                descricao = `${t.categoria} (${conta?.nome || 'Conta'})`;
+            } else if (t.tipo === 'receita') {
+                const conta = contas.find(c => c.id === t.contaId);
+                descricao = `Receita: ${t.categoria} (${conta?.nome || 'Conta'})`;
+            } else if (t.tipo === 'transferencia') {
+                const origem = contas.find(c => c.id === t.contaOrigemId);
+                const destino = contas.find(c => c.id === t.contaDestinoId);
+                descricao = `Transferência: ${origem?.nome} → ${destino?.nome}`;
+            }
+            const valorFormatado = (t.tipo === 'despesa' || (t.tipo === 'transferencia' && t.contaOrigemId)) 
+                ? `- ${formatarMoeda(t.valor)}` 
+                : `+ ${formatarMoeda(t.valor)}`;
+            const dataFormatada = new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR');
+            li.innerHTML = `<span><strong>${descricao}</strong><br><small>${dataFormatada}</small></span>
+                            <span style="font-weight:bold; color:${t.tipo === 'despesa' ? '#dc2626' : '#10b981'}">${valorFormatado}</span>`;
+            listaTransacoesUl.appendChild(li);
         });
     }
 
+    // Gráfico de despesas por categoria (apenas despesas do mês atual)
     function atualizarGrafico() {
-        // Agrupa gastos por categoria (apenas do mês atual)
         const hoje = new Date();
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
-        
-        const totaisPorCategoria = {};
-        gastos.forEach(g => {
-            const dataG = new Date(g.data + 'T00:00:00');
-            if (dataG.getMonth() === mesAtual && dataG.getFullYear() === anoAtual) {
-                totaisPorCategoria[g.categoria] = (totaisPorCategoria[g.categoria] || 0) + g.valor;
-            }
+
+        const despesasMes = transacoes.filter(t => {
+            if (t.tipo !== 'despesa') return false;
+            const d = new Date(t.data + 'T00:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
         });
 
-        const categorias = Object.keys(totaisPorCategoria);
-        const valores = Object.values(totaisPorCategoria);
+        const totais = {};
+        despesasMes.forEach(d => {
+            totais[d.categoria] = (totais[d.categoria] || 0) + d.valor;
+        });
 
-        // Destroi gráfico antigo se existir
+        const labels = Object.keys(totais);
+        const valores = Object.values(totais);
+
         if (chartInstance) chartInstance.destroy();
-
         chartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: categorias,
+                labels: labels,
                 datasets: [{
                     data: valores,
-                    backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#94a3b8']
+                    backgroundColor: ['#f97316','#3b82f6','#10b981','#8b5cf6','#ec4899','#94a3b8']
                 }]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
+                plugins: { legend: { position: 'bottom' } }
             }
         });
     }
 
-    function salvarDados() {
-        localStorage.setItem('salario', salario);
-        localStorage.setItem('gastos', JSON.stringify(gastos));
+    function definirDataHoje() {
+        const hoje = new Date();
+        dataAtualP.textContent = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        if (!dataGastoInput.value) {
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2,'0');
+            const dia = String(hoje.getDate()).padStart(2,'0');
+            dataGastoInput.value = `${ano}-${mes}-${dia}`;
+        }
     }
 
     function atualizarTudo() {
-        salarioInput.value = salario || '';
-        atualizarSaldoDisponivel();
-        atualizarListaGastos();
+        atualizarSelectContas();
+        saldoTotalH2.textContent = formatarMoeda(calcularSaldoTotal());
+        renderizarTransacoes();
         atualizarGrafico();
-        salvarDados();
     }
 
-    // --- EVENTOS ---
-    btnSalvarSalario.addEventListener('click', () => {
-        const novoSalario = parseFloat(salarioInput.value);
-        if (!isNaN(novoSalario) && novoSalario >= 0) {
-            salario = novoSalario;
-            atualizarTudo();
-            alert('Salário salvo com sucesso!');
-        } else {
-            alert('Por favor, insira um valor válido.');
-        }
-    });
-
-    btnAdicionar.addEventListener('click', () => {
-        const valor = parseFloat(valorGasto.value);
-        const categoria = categoriaGasto.value;
-        let data = dataGasto.value;
-
-        if (!data) {
-            alert('Selecione uma data.');
-            return;
-        }
-        if (isNaN(valor) || valor <= 0) {
-            alert('Valor inválido.');
-            return;
-        }
-
-        gastos.push({ valor, categoria, data });
-        valorGasto.value = ''; // limpa campo
+    // ---------- Inicialização e Eventos ----------
+    function init() {
+        carregarDados();
+        definirDataHoje();
         atualizarTudo();
-    });
 
-    btnLimpar.addEventListener('click', () => {
-        if (confirm('Tem certeza que deseja apagar TODOS os dados salvos?')) {
-            localStorage.clear();
-            salario = 0;
-            gastos = [];
+        // Adicionar Despesa
+        btnAdicionarDespesa.addEventListener('click', () => {
+            const contaId = selectContaTransacao.value;
+            if (!contaId) {
+                alert('Selecione uma conta.');
+                return;
+            }
+            const valor = parseFloat(valorGastoInput.value);
+            if (isNaN(valor) || valor <= 0) {
+                alert('Valor inválido.');
+                return;
+            }
+            const categoria = categoriaGastoSelect.value;
+            const data = dataGastoInput.value;
+            if (!data) {
+                alert('Data inválida.');
+                return;
+            }
+
+            const novaTransacao = {
+                id: gerarId(),
+                tipo: 'despesa',
+                valor,
+                categoria,
+                data,
+                contaId
+            };
+            transacoes.push(novaTransacao);
+            salvarTransacoes();
+            valorGastoInput.value = '';
             atualizarTudo();
-            location.reload(); // recarrega para limpar campos
-        }
-    });
+        });
 
-    // Inicialização
-    atualizarData();
-    atualizarTudo();
-});
-```
+        // Modal de Contas
+        btnGerenciarContas.addEventListener('click', () => {
+            renderizarListaContasModal();
+            modalOverlay.style.display = 'flex';
+        });
+
+        btnFecharModal.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+
+        btnCriarConta.addEventListener('click', () => {
+            const nome = novaContaNome.value.trim();
+            if (!nome) {
+                alert('Digite um nome para a conta.');
+                return;
+            }
+            const saldoInicial = parseFloat(novaContaSaldoInicial.value) || 0;
+            const incluir = novaContaIncluirTotal.checked;
+
+            const novaConta = {
+                id: gerarId(),
+                nome,
+                saldoInicial,
+                incluirNoTotal: incluir
+            };
+            contas.push(novaConta);
+            salvarContas();
+            novaContaNome.value = '';
+            novaContaSaldoInicial.value = '0';
+            novaContaIncluirTotal.checked = true;
+            renderizarListaContasModal();
+            atualizarTudo();
+        });
+
+        // Limpar tudo
+        btnLimparTudo.addEventListener('click', () => {
+            if (confirm('Apagar TODOS os dados (contas e transações)?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+
+        // Fechar modal clicando fora
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) modalOverlay.style.display = 'none';
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
