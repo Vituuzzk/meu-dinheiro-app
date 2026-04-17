@@ -10,9 +10,9 @@ export async function loginComGoogle() {
     alert("✅ Login bem-sucedido: " + result.user.displayName);
     return result.user;
   } catch (error) {
-    console.error("Erro no login:", error);
-    // Mostra o erro na tela do celular
-    alert("❌ Falha no login: " + error.message);
+    // Mostra o erro em um pop-up no celular
+    alert("❌ ERRO NO LOGIN:\n" + error.message + "\n\nCódigo: " + error.code);
+    console.error(error);
     return null;
   }
 }
