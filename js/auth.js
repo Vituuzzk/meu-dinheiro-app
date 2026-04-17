@@ -1,31 +1,45 @@
 // js/auth.js
 import { auth } from './firebase.js';
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const provider = new GoogleAuthProvider();
 
+// Função para iniciar login com Google (usando redirecionamento)
 export async function loginComGoogle() {
   try {
-    const result = await signInWithPopup(auth, provider);
-    alert("✅ Login bem-sucedido: " + result.user.displayName);
-    return result.user;
+    await signInWithRedirect(auth, provider);
+    // O usuário será redirecionado para o Google e depois voltará automaticamente.
   } catch (error) {
-    // Mostra o erro em um pop-up no celular
-    alert("❌ ERRO NO LOGIN:\n" + error.message + "\n\nCódigo: " + error.code);
-    console.error(error);
+    alert("❌ Erro ao iniciar login: " + error.message);
+  }
+}
+
+// Função para capturar o resultado do redirecionamento quando o usuário voltar
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      console.log("✅ Login via redirect bem-sucedido:", result.user.displayName);
+      return result.user;
+    }
+    return null;
+  } catch (error) {
+    alert("❌ Erro no redirecionamento: " + error.message);
     return null;
   }
 }
 
+// Logout
 export async function logout() {
   try {
     await signOut(auth);
-    alert("👋 Logout realizado");
+    console.log("👋 Logout realizado");
   } catch (error) {
     alert("Erro no logout: " + error.message);
   }
 }
 
+// Observador de estado de autenticação
 export function observarAuth(callback) {
   return onAuthStateChanged(auth, callback);
 }
