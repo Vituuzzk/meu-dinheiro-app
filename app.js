@@ -1,6 +1,6 @@
 (function(){
     "use strict";
-    const APP_VERSION = '2.0.1';
+    const APP_VERSION = '2.1.0';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
 
     // ---------- ESTADO ----------
@@ -22,8 +22,8 @@
 
     // ---------- ELEMENTOS ----------
     const getEl = (id) => document.getElementById(id);
-    const mesAtualTitulo = getEl('mes-atual-titulo');
-    const mesTransacoesTituloNovo = getEl('mes-transacoes-titulo-novo');
+    const anoAtualTitulo = getEl('ano-atual-titulo');
+    const mesTransacoesTitulo = getEl('mes-transacoes-titulo');
     const saldoTotalValor = getEl('saldo-total-valor');
     const totalReceitasMes = getEl('total-receitas-mes');
     const totalDespesasMes = getEl('total-despesas-mes');
@@ -91,31 +91,37 @@
 
     const btnAdicionarContaPrincipal = getEl('adicionar-conta-principal');
 
-    // Dropdown de meses e setas
-    const btnToggleMeses = getEl('btn-toggle-meses');
-    const mesesDropdown = getEl('meses-chips-dropdown');
+    // Navegação de ano/mês
+    const btnAnoAnterior = getEl('ano-anterior');
+    const btnAnoProximo = getEl('ano-proximo');
+    const mesesGrid = getEl('meses-grid');
     const mesChips = document.querySelectorAll('.mes-chip');
-    const btnMesAnteriorSeta = getEl('mes-anterior-seta');
-    const btnMesProximoSeta = getEl('mes-proximo-seta');
-    const mesTituloContainer = getEl('mes-titulo-container');
+    const btnCancelarMes = getEl('btn-cancelar-mes');
+    const btnMesAtual = getEl('btn-mes-atual');
+    const btnMesTransacoesAnterior = getEl('mes-transacoes-anterior');
+    const btnMesTransacoesProximo = getEl('mes-transacoes-proximo');
+
+    let anoAnteriorSelecao = anoAtual;
+    let mesAnteriorSelecao = mesAtual;
 
     // ---------- MÁSCARA CORRIGIDA ----------
     function aplicarMascaraMoeda(e) {
-        let v = e.target.value;
-        v = v.replace(/[^\d,]/g, '');
+        let v = e.target.value.replace(/[^\d,]/g, '');
         const partes = v.split(',');
         if (partes.length > 2) v = partes[0] + ',' + partes.slice(1).join('');
-        if (v === '' || v === ',') {
-            e.target.value = '';
-            return;
-        }
+        e.target.value = v;
+    }
+    function formatarMoedaInput(v) {
+        if (!v) return '';
         let numero = parseFloat(v.replace(',', '.'));
-        if (isNaN(numero)) numero = 0;
-        e.target.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (isNaN(numero)) return '';
+        return numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     function converterMoedaParaFloat(v) {
         if (!v) return 0;
-        return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+        const limpo = v.replace(/\./g, '').replace(',', '.');
+        const numero = parseFloat(limpo);
+        return isNaN(numero) ? 0 : numero;
     }
     function formatarMoeda(v) {
         return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -123,7 +129,9 @@
     function configurarMascaras() {
         document.querySelectorAll('.moeda').forEach(i => {
             i.addEventListener('input', aplicarMascaraMoeda);
-            i.addEventListener('blur', e => { if (e.target.value === '') e.target.value = '0,00'; });
+            i.addEventListener('blur', (e) => {
+                if (e.target.value !== '') e.target.value = formatarMoedaInput(e.target.value);
+            });
         });
     }
     function gerarId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
@@ -168,7 +176,7 @@
     function salvarTransacoes() { localStorage.setItem('transacoes', JSON.stringify(transacoes)); }
     function salvarCategorias() { localStorage.setItem('categorias', JSON.stringify(categorias)); }
 
-    // ---------- CÁLCULOS (com filtro por mês) ----------
+    // ---------- CÁLCULOS (com filtro por mês/ano) ----------
     function getDataLimite() { return new Date(anoAtual, mesAtual + 1, 0); }
     function calcularFaturaAtual(cartaoId) {
         return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
@@ -217,11 +225,10 @@
     }
 
     // ---------- RENDER ----------
-    function atualizarCabecalhoMes() {
+    function atualizarCabecalho() {
+        if (anoAtualTitulo) anoAtualTitulo.textContent = anoAtual;
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        const titulo = `${meses[mesAtual]} ${anoAtual}`;
-        if (mesAtualTitulo) mesAtualTitulo.textContent = titulo;
-        if (mesTransacoesTituloNovo) mesTransacoesTituloNovo.textContent = titulo;
+        if (mesTransacoesTitulo) mesTransacoesTitulo.textContent = `${meses[mesAtual]} ${anoAtual}`;
         atualizarChipAtivo();
     }
     function atualizarChipAtivo() {
@@ -274,7 +281,7 @@
                         <div class="cartao-resumo-header"><strong>${cartao.nome}</strong><span>${formatarMoeda(fatura)}</span></div>
                         <div class="limite-barra-container"><div class="limite-barra"><div class="limite-barra-preenchida" style="width: ${percentual}%;"></div></div></div>
                         <div style="font-size:14px; color:#6b7280;">Limite: ${formatarMoeda(cartao.limite)} | Disponível: ${formatarMoeda(disponivel)}</div>
-                        <div class="cartao-datos"><span>📅 Vence dia ${cartao.diaVencimento}</span><span class="melhor-dia-compra">✨ Melhor dia: ${melhorDia}</span></div>
+                        <div class="cartao-datas"><span>📅 Vence dia ${cartao.diaVencimento}</span><span class="melhor-dia-compra">✨ Melhor dia: ${melhorDia}</span></div>
                     `;
                     cartoesResumoContainer.appendChild(div);
                 });
@@ -375,14 +382,16 @@
         atualizarSelectModal();
         const hoje = new Date();
         modalData.value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
-        modalValor.value = '';
-        modalDescricao.value = '';
-        modalObservacao.value = '';
-        modalTags.value = '';
-        checkboxRecebido.checked = true;
-        checkboxReceitaFixa.checked = false;
-        repetirContainer.style.display = 'none';
-        categoriaSelecionada = 'Alimentação';
+        if (modalTransacao.style.display !== 'flex') {
+            modalValor.value = '';
+            modalDescricao.value = '';
+            modalObservacao.value = '';
+            modalTags.value = '';
+            checkboxRecebido.checked = true;
+            checkboxReceitaFixa.checked = false;
+            repetirContainer.style.display = 'none';
+            categoriaSelecionada = 'Alimentação';
+        }
         renderizarChipsCategorias();
         modalTransacao.style.display = 'flex';
     }
@@ -455,7 +464,7 @@
         console.log(`🟢 init() executado - v${APP_VERSION}`);
         carregarDados();
         configurarMascaras();
-        atualizarCabecalhoMes();
+        atualizarCabecalho();
         renderizarDashboard();
         renderizarTransacoesAgrupadas();
 
@@ -475,45 +484,56 @@
             });
         }
 
-        const navegarMes = (delta) => {
-            mesAtual += delta;
-            if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
-            else if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
-            atualizarCabecalhoMes();
+        const aplicarMesAno = () => {
+            atualizarCabecalho();
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
         };
 
-        // Toggle do dropdown de meses
-        if (btnToggleMeses) {
-            btnToggleMeses.addEventListener('click', (e) => {
-                e.stopPropagation();
-                mesesDropdown.classList.toggle('ativo');
-                btnToggleMeses.classList.toggle('aberto');
-            });
-        }
-        // Fechar dropdown ao clicar fora
-        document.addEventListener('click', (e) => {
-            if (!mesTituloContainer?.contains(e.target) && !mesesDropdown?.contains(e.target)) {
-                mesesDropdown?.classList.remove('ativo');
-                btnToggleMeses?.classList.remove('aberto');
-            }
+        btnAnoAnterior.addEventListener('click', () => {
+            anoAnteriorSelecao = anoAtual;
+            mesAnteriorSelecao = mesAtual;
+            anoAtual--;
+            aplicarMesAno();
+        });
+        btnAnoProximo.addEventListener('click', () => {
+            anoAnteriorSelecao = anoAtual;
+            mesAnteriorSelecao = mesAtual;
+            anoAtual++;
+            aplicarMesAno();
         });
 
-        // Setas de navegação
-        if (btnMesAnteriorSeta) btnMesAnteriorSeta.addEventListener('click', () => navegarMes(-1));
-        if (btnMesProximoSeta) btnMesProximoSeta.addEventListener('click', () => navegarMes(1));
-
-        // Chips de meses
         mesChips.forEach(chip => {
             chip.addEventListener('click', () => {
+                anoAnteriorSelecao = anoAtual;
+                mesAnteriorSelecao = mesAtual;
                 mesAtual = parseInt(chip.dataset.mes);
-                atualizarCabecalhoMes();
-                renderizarDashboard();
-                renderizarTransacoesAgrupadas();
-                mesesDropdown.classList.remove('ativo');
-                btnToggleMeses.classList.remove('aberto');
+                aplicarMesAno();
             });
+        });
+
+        btnCancelarMes.addEventListener('click', () => {
+            anoAtual = anoAnteriorSelecao;
+            mesAtual = mesAnteriorSelecao;
+            aplicarMesAno();
+        });
+
+        btnMesAtual.addEventListener('click', () => {
+            const hoje = new Date();
+            anoAnteriorSelecao = anoAtual;
+            mesAnteriorSelecao = mesAtual;
+            anoAtual = hoje.getFullYear();
+            mesAtual = hoje.getMonth();
+            aplicarMesAno();
+        });
+
+        btnMesTransacoesAnterior.addEventListener('click', () => {
+            if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
+            aplicarMesAno();
+        });
+        btnMesTransacoesProximo.addEventListener('click', () => {
+            if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
+            aplicarMesAno();
         });
 
         fab.addEventListener('click', () => abrirModalTransacao());
@@ -537,13 +557,25 @@
             repetirContainer.style.display = checkboxReceitaFixa.checked ? 'block' : 'none';
         });
 
+        function mostrarAviso(mensagem) {
+            const aviso = document.createElement('div');
+            aviso.textContent = mensagem;
+            aviso.style.cssText = `
+                position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+                background: #1f2937; color: white; padding: 12px 20px; border-radius: 30px;
+                font-size: 14px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); white-space: nowrap;
+            `;
+            document.body.appendChild(aviso);
+            setTimeout(() => aviso.remove(), 2000);
+        }
+
         const salvarTransacao = (fecharModal = true) => {
             const contaId = modalConta?.value;
-            if (!contaId) { alert('Selecione uma conta.'); return false; }
+            if (!contaId) { mostrarAviso('Selecione uma conta'); return false; }
             const valor = converterMoedaParaFloat(modalValor?.value);
-            if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return false; }
+            if (isNaN(valor) || valor <= 0) { mostrarAviso('Valor inválido'); return false; }
             const data = modalData?.value;
-            if (!data) { alert('Data inválida.'); return false; }
+            if (!data) { mostrarAviso('Data inválida'); return false; }
             const descricao = modalDescricao?.value.trim() || (tipoTransacaoAtual === 'receita' ? 'Receita' : 'Despesa');
             const categoria = categoriaSelecionada;
             const recebido = tipoTransacaoAtual === 'receita' ? checkboxRecebido?.checked : true;
