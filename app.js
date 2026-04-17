@@ -6,7 +6,7 @@ import {
 
 (function(){
     "use strict";
-    const APP_VERSION = '3.0.3';
+    const APP_VERSION = '3.1.0';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION}`);
 
     // ---------- ESTADO ----------
@@ -32,6 +32,8 @@ import {
     let planejamentoChartInstance = null;
     let currentUser = null;
     let usandoFirebase = false;
+    let anoAnteriorSelecao = anoAtual;
+    let mesAnteriorSelecao = mesAtual;
 
     const getEl = (id) => document.getElementById(id);
     const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -368,20 +370,74 @@ import {
         if (getEl('tela-planejamento').classList.contains('ativa')) renderizarPlanejamento();
     }
 
-    // NOVA FUNÇÃO: Abrir modal com animação
     function abrirModal(modalOverlay) {
         modalOverlay.style.display = 'flex';
         setTimeout(() => modalOverlay.classList.add('ativo'), 10);
     }
-
-    // NOVA FUNÇÃO: Fechar modal com animação
     function fecharModal(modalOverlay) {
         modalOverlay.classList.remove('ativo');
         setTimeout(() => modalOverlay.style.display = 'none', 300);
     }
 
-    // Continua na Parte 2...
+    // ---------- BACKUP E EXPORTAÇÃO ----------
+    function exportarBackup() {
+        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, emprestimos, orcamentos, categorias };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meu-dinheiro-backup-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('✅ Backup exportado com sucesso!');
+    }
 
+    function importarBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (!backup.contas || !backup.transacoes) throw new Error('Arquivo inválido');
+                if (confirm('Importar backup substituirá todos os dados atuais. Continuar?')) {
+                    contas = backup.contas;
+                    transacoes = backup.transacoes;
+                    emprestimos = backup.emprestimos || [];
+                    orcamentos = backup.orcamentos || {};
+                    if (backup.categorias) categorias = backup.categorias;
+                    salvarLocal();
+                    if (usandoFirebase) {
+                        // Sincronizar com Firebase (opcional)
+                    }
+                    location.reload();
+                }
+            } catch (error) { alert('❌ Arquivo de backup inválido.'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    function exportarParaCSV() {
+        if (transacoes.length === 0) return alert('Nenhuma transação para exportar.');
+        let csv = 'Data,Tipo,Categoria,Descrição,Conta,Valor (R$)\n';
+        transacoes.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(t => {
+            const conta = contas.find(c => c.id === t.contaId)?.nome || 'Conta';
+            const valor = t.tipo === 'despesa' ? -t.valor : t.valor;
+            csv += `${t.data},${t.tipo},${t.categoria},${t.descricao || ''},${conta},${valor.toFixed(2).replace('.',',')}\n`;
+        });
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meu-dinheiro-${mesAtual+1}-${anoAtual}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Continua na Parte 2...
     // ---------- LISTENERS ----------
     function configurarListeners() {
         // FAB
@@ -405,12 +461,9 @@ import {
             abrirModal(getEl('modal-emprestimo'));
         });
 
-        // Fechar modais (usando os botões de fechar)
+        // Fechar modais
         document.querySelectorAll('[id^="fechar-modal"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const modal = btn.closest('.modal-overlay');
-                fecharModal(modal);
-            });
+            btn.addEventListener('click', () => fecharModal(btn.closest('.modal-overlay')));
         });
 
         // Salvar Empréstimo
@@ -489,7 +542,6 @@ import {
 
         // Salvar e Continuar
         getEl('salvar-continuar-modal').addEventListener('click', async () => {
-            // Salva sem fechar
             const contaId = getEl('modal-conta').value;
             if (!contaId) return alert('Selecione uma conta.');
             const valor = converterMoedaParaFloat(getEl('modal-valor').value);
@@ -503,7 +555,6 @@ import {
             transacoes.push(nova);
             salvarLocal();
             if (usandoFirebase) await salvarTransacaoFirebase(nova);
-            // Limpa campos, mas mantém modal aberto
             getEl('modal-valor').value = '';
             getEl('modal-descricao').value = '';
             atualizarTudo();
@@ -538,7 +589,7 @@ import {
             lucide.createIcons();
         };
 
-        // Tipo de transação (Receita/Despesa)
+        // Tipo de transação
         getEl('tipo-receita-btn').addEventListener('click', () => {
             tipoTransacaoAtual = 'receita';
             getEl('modal-titulo').textContent = 'Nova receita';
@@ -553,6 +604,62 @@ import {
             getEl('tipo-receita-btn').classList.remove('ativo');
             getEl('modal-recebido').closest('label').style.display = 'none';
         });
+
+        // Dropdown de meses
+        getEl('btn-toggle-meses').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dd = getEl('meses-dropdown');
+            dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', (e) => {
+            const dd = getEl('meses-dropdown');
+            const btn = getEl('btn-toggle-meses');
+            if (!btn.contains(e.target) && !dd.contains(e.target)) dd.style.display = 'none';
+        });
+        document.querySelectorAll('.mes-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                mesAtual = parseInt(chip.dataset.mes);
+                atualizarTudo();
+                getEl('meses-dropdown').style.display = 'none';
+            });
+        });
+        getEl('btn-cancelar-mes').addEventListener('click', () => {
+            mesAtual = mesAnteriorSelecao;
+            anoAtual = anoAnteriorSelecao;
+            atualizarTudo();
+            getEl('meses-dropdown').style.display = 'none';
+        });
+        getEl('btn-mes-atual').addEventListener('click', () => {
+            const hoje = new Date();
+            mesAtual = hoje.getMonth();
+            anoAtual = hoje.getFullYear();
+            atualizarTudo();
+            getEl('meses-dropdown').style.display = 'none';
+        });
+
+        // Limpar Dados
+        getEl('btn-limpar-tudo').addEventListener('click', () => {
+            if (confirm('Apagar TODOS os dados permanentemente?')) {
+                localStorage.clear();
+                if (usandoFirebase) {
+                    // Opcional: deletar documentos do Firebase (mais complexo)
+                }
+                location.reload();
+            }
+        });
+
+        // Backup / Exportar
+        getEl('btn-exportar-backup')?.addEventListener('click', exportarBackup);
+        getEl('btn-importar-backup')?.addEventListener('click', () => getEl('input-importar-backup').click());
+        getEl('input-importar-backup')?.addEventListener('change', importarBackup);
+        getEl('btn-exportar-excel')?.addEventListener('click', exportarParaCSV);
+
+        // Sobre
+        const itemSobre = getEl('item-sobre');
+        if (itemSobre) {
+            itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
+            itemSobre.addEventListener('click', () => alert(`💰 Meu Dinheiro v${APP_VERSION}\nDesenvolvido por Victor Rodrigues`));
+        }
     }
 
     // ---------- INICIALIZAÇÃO ----------
@@ -565,7 +672,6 @@ import {
         renderizarEmprestimos();
         configurarListeners();
 
-        // Auth
         observarAuth(async (user) => {
             currentUser = user;
             usandoFirebase = !!user;
@@ -575,7 +681,6 @@ import {
                 getEl('btn-login-google').style.display = 'none';
                 getEl('btn-logout').style.display = 'block';
                 await carregarFirebase(user.uid);
-                alert("✅ Login realizado com sucesso!");
             } else {
                 getEl('perfil-nome').textContent = 'Usuário Local';
                 getEl('perfil-email').textContent = 'Modo offline';
@@ -587,14 +692,12 @@ import {
         });
 
         getEl('btn-login-google').addEventListener('click', loginComGoogle);
-        getEl('btn-logout').addEventListener('click', () => {
-            logout();
-            alert("👋 Logout realizado.");
-        });
+        getEl('btn-logout').addEventListener('click', () => logout());
 
-        // Meses
         getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
         getEl('mes-proximo-seta').addEventListener('click', () => navegarMes(1));
+        getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
+        getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
     }
 
     function navegarMes(delta) {
