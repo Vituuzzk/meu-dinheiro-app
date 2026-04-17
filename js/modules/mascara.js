@@ -1,4 +1,4 @@
-// Módulo de Máscaras e Formatação de Moeda
+// Módulo de Máscaras e Formatação de Moedaa
 (function(global) {
     "use strict";
 
