@@ -1,6 +1,6 @@
 (function(){
     "use strict";
-    const APP_VERSION = '1.5.0'; // Versão do app
+    const APP_VERSION = '1.6.0'; // Versão do app
     console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
 
     // ---------- ESTADO ----------
@@ -35,6 +35,7 @@
     const modalCategoria = getEl('modal-categoria');
     const salvarTransacaoModal = getEl('salvar-transacao-modal');
     const fecharModalTransacao = getEl('fechar-modal-transacao');
+    const checkboxRecebido = getEl('modal-recebido');
     let tipoTransacaoAtual = 'receita';
 
     const modalOverlay = getEl('modal-contas');
@@ -71,8 +72,12 @@
     const btnMesTransacoesAnteriorNovo = getEl('mes-transacoes-anterior-novo');
     const btnMesTransacoesProximoNovo = getEl('mes-transacoes-proximo-novo');
 
-    // Novo botão adicionar conta na tela principal
     const btnAdicionarContaPrincipal = getEl('adicionar-conta-principal');
+
+    // Novos elementos dos chips de meses
+    const btnMesAnteriorNovo = getEl('mes-anterior-novo');
+    const btnMesProximoNovo = getEl('mes-proximo-novo');
+    const mesChips = document.querySelectorAll('.mes-chip');
 
     // ---------- MÁSCARA ----------
     function aplicarMascaraMoeda(e) {
@@ -116,12 +121,21 @@
         }
     }
 
-    // ---------- PERSISTÊNCIA ----------
+    // ---------- PERSISTÊNCIA (com migração de receitas) ----------
     function carregarDados() {
         try {
             contas = JSON.parse(localStorage.getItem('contas')) || [];
             transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
         } catch(e) { contas = []; transacoes = []; }
+        
+        // Migração: garantir que receitas tenham o campo 'recebido'
+        transacoes.forEach(t => {
+            if (t.tipo === 'receita' && t.recebido === undefined) {
+                t.recebido = true; // receitas antigas são consideradas recebidas
+            }
+        });
+        salvarTransacoes();
+        
         if (contas.length === 0) {
             contas.push({ id: gerarId(), nome: 'Carteira', tipo: 'normal', saldoInicial: 0, incluirNoTotal: true });
             salvarContas();
@@ -130,7 +144,7 @@
     function salvarContas() { localStorage.setItem('contas', JSON.stringify(contas)); }
     function salvarTransacoes() { localStorage.setItem('transacoes', JSON.stringify(transacoes)); }
 
-    // ---------- CÁLCULOS ----------
+    // ---------- CÁLCULOS (com correção de receitas futuras) ----------
     function calcularFaturaAtual(cartaoId) {
         return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
     }
@@ -141,7 +155,11 @@
         let saldo = conta.saldoInicial;
         transacoes.forEach(t => {
             if (t.tipo === 'despesa' && t.contaId === contaId) saldo -= t.valor;
-            else if (t.tipo === 'receita' && t.contaId === contaId) saldo += t.valor;
+            else if (t.tipo === 'receita' && t.contaId === contaId) {
+                // Só soma se tiver recebido
+                const foiRecebida = (t.recebido !== undefined) ? t.recebido : true;
+                if (foiRecebida) saldo += t.valor;
+            }
             else if (t.tipo === 'transferencia') {
                 if (t.contaOrigemId === contaId) saldo -= t.valor;
                 if (t.contaDestinoId === contaId) saldo += t.valor;
@@ -158,17 +176,30 @@
         return total;
     }
     function calcularReceitasMes() {
-        return transacoes.filter(t => t.tipo === 'receita' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual).reduce((s, t) => s + t.valor, 0);
+        return transacoes.filter(t => t.tipo === 'receita' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual && (t.recebido !== undefined ? t.recebido : true)).reduce((s, t) => s + t.valor, 0);
     }
     function calcularDespesasMes() {
         return transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual).reduce((s, t) => s + t.valor, 0);
     }
 
-    // ---------- RENDER ----------
+    // ---------- RENDER (com atualização dos chips) ----------
     function atualizarCabecalhoMes() {
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        if (mesAtualTitulo) mesAtualTitulo.textContent = `${meses[mesAtual]} ${anoAtual}`;
-        if (mesTransacoesTituloNovo) mesTransacoesTituloNovo.textContent = `${meses[mesAtual]} ${anoAtual}`;
+        const titulo = `${meses[mesAtual]} ${anoAtual}`;
+        if (mesAtualTitulo) mesAtualTitulo.textContent = titulo;
+        if (mesTransacoesTituloNovo) mesTransacoesTituloNovo.textContent = titulo;
+        atualizarChipAtivo();
+    }
+
+    function atualizarChipAtivo() {
+        mesChips.forEach(chip => {
+            const mesChip = parseInt(chip.dataset.mes);
+            if (mesChip === mesAtual) {
+                chip.classList.add('ativo');
+            } else {
+                chip.classList.remove('ativo');
+            }
+        });
     }
 
     function renderizarDashboard() {
@@ -298,6 +329,7 @@
         if (modalValor) modalValor.value = '';
         if (modalDescricao) modalDescricao.value = '';
         if (modalCategoria) modalCategoria.value = '';
+        if (checkboxRecebido) checkboxRecebido.checked = true;
         if (modalTransacao) modalTransacao.style.display = 'flex';
     }
 
@@ -378,57 +410,73 @@
             itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
         }
 
-        // Evento do botão "+" na tela principal (adicionar conta)
+        // Evento do botão "+" na tela principal
         if (btnAdicionarContaPrincipal) {
             btnAdicionarContaPrincipal.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Pré-seleciona conta normal
                 document.querySelector('input[value="normal"]').checked = true;
                 if (camposContaNormal) camposContaNormal.style.display = 'block';
                 if (camposCartaoCredito) camposCartaoCredito.style.display = 'none';
-                // Limpa campos
                 if (novaContaNome) novaContaNome.value = '';
                 if (novaContaSaldoInicial) novaContaSaldoInicial.value = '0,00';
                 if (novaContaIncluirTotal) novaContaIncluirTotal.checked = true;
-                // Abre modal
                 if (modalOverlay) modalOverlay.style.display = 'flex';
             });
         }
 
-        // Event listeners com verificação de existência
-        const btnMesAnterior = getEl('mes-anterior');
-        const btnMesProximo = getEl('mes-proximo');
-        if (btnMesAnterior) btnMesAnterior.addEventListener('click', () => {
-            if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
-        });
-        if (btnMesProximo) btnMesProximo.addEventListener('click', () => {
-            if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
+        // Navegação dos meses (novos botões e chips)
+        const navegarMes = (delta) => {
+            mesAtual += delta;
+            if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
+            else if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
+            atualizarCabecalhoMes();
+            renderizarDashboard();
+            renderizarTransacoesAgrupadas();
+        };
+
+        if (btnMesAnteriorNovo) btnMesAnteriorNovo.addEventListener('click', () => navegarMes(-1));
+        if (btnMesProximoNovo) btnMesProximoNovo.addEventListener('click', () => navegarMes(1));
+        if (btnMesTransacoesAnteriorNovo) btnMesTransacoesAnteriorNovo.addEventListener('click', () => navegarMes(-1));
+        if (btnMesTransacoesProximoNovo) btnMesTransacoesProximoNovo.addEventListener('click', () => navegarMes(1));
+
+        mesChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const mesChip = parseInt(chip.dataset.mes);
+                mesAtual = mesChip;
+                atualizarCabecalhoMes();
+                renderizarDashboard();
+                renderizarTransacoesAgrupadas();
+            });
         });
 
-        if (btnMesTransacoesAnteriorNovo) btnMesTransacoesAnteriorNovo.addEventListener('click', () => {
-            if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
-        });
-        if (btnMesTransacoesProximoNovo) btnMesTransacoesProximoNovo.addEventListener('click', () => {
-            if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
-            atualizarCabecalhoMes(); renderizarDashboard(); renderizarTransacoesAgrupadas();
+        // Modal de transação: abrir sem trocar de aba
+        fab.addEventListener('click', () => {
+            abrirModalTransacao();
         });
 
-        if (tipoReceitaBtn) tipoReceitaBtn.addEventListener('click', () => {
-            tipoTransacaoAtual = 'receita'; if(modalTitulo) modalTitulo.textContent = 'Nova receita';
-            tipoReceitaBtn.style.background = '#10b981'; if(tipoDespesaBtn) tipoDespesaBtn.style.background = '#9ca3af';
-            tipoReceitaBtn.classList.add('ativo'); if(tipoDespesaBtn) tipoDespesaBtn.classList.remove('ativo');
+        // Botões de tipo (Receita/Despesa)
+        tipoReceitaBtn.addEventListener('click', () => {
+            tipoTransacaoAtual = 'receita';
+            modalTitulo.textContent = 'Nova receita';
+            tipoReceitaBtn.style.background = '#10b981';
+            tipoDespesaBtn.style.background = '#9ca3af';
+            tipoReceitaBtn.classList.add('ativo');
+            tipoDespesaBtn.classList.remove('ativo');
+            if (checkboxRecebido) checkboxRecebido.closest('label').style.display = 'flex';
         });
-        if (tipoDespesaBtn) tipoDespesaBtn.addEventListener('click', () => {
-            tipoTransacaoAtual = 'despesa'; if(modalTitulo) modalTitulo.textContent = 'Nova despesa';
-            tipoDespesaBtn.style.background = '#dc2626'; if(tipoReceitaBtn) tipoReceitaBtn.style.background = '#9ca3af';
-            tipoDespesaBtn.classList.add('ativo'); if(tipoReceitaBtn) tipoReceitaBtn.classList.remove('ativo');
+        tipoDespesaBtn.addEventListener('click', () => {
+            tipoTransacaoAtual = 'despesa';
+            modalTitulo.textContent = 'Nova despesa';
+            tipoDespesaBtn.style.background = '#dc2626';
+            tipoReceitaBtn.style.background = '#9ca3af';
+            tipoDespesaBtn.classList.add('ativo');
+            tipoReceitaBtn.classList.remove('ativo');
+            if (checkboxRecebido) checkboxRecebido.closest('label').style.display = 'none';
         });
 
-        if (fecharModalTransacao) fecharModalTransacao.addEventListener('click', () => { if(modalTransacao) modalTransacao.style.display = 'none'; });
-        if (salvarTransacaoModal) salvarTransacaoModal.addEventListener('click', () => {
+        fecharModalTransacao.addEventListener('click', () => modalTransacao.style.display = 'none');
+
+        salvarTransacaoModal.addEventListener('click', () => {
             const contaId = modalConta?.value;
             if (!contaId) { alert('Selecione uma conta.'); return; }
             const valor = converterMoedaParaFloat(modalValor?.value);
@@ -438,15 +486,34 @@
             const descricao = modalDescricao?.value.trim() || (tipoTransacaoAtual === 'receita' ? 'Receita' : 'Despesa');
             const categoria = modalCategoria?.value.trim() || 'Outros';
 
+            const hoje = new Date();
+            const dataTransacao = new Date(data + 'T00:00:00');
+            let recebido = true;
+            if (tipoTransacaoAtual === 'receita') {
+                recebido = checkboxRecebido?.checked ?? true;
+                // Se a data é futura e o usuário não desmarcou, sugerimos false por padrão?
+                // Mas respeitamos a escolha do usuário.
+            }
+
             transacoes.push({
-                id: gerarId(), tipo: tipoTransacaoAtual, valor, categoria, descricao, data,
-                timestamp: new Date().toISOString(), contaId
+                id: gerarId(),
+                tipo: tipoTransacaoAtual,
+                valor,
+                categoria,
+                descricao,
+                data,
+                timestamp: new Date().toISOString(),
+                contaId,
+                recebido: recebido
             });
             salvarTransacoes();
-            if(modalTransacao) modalTransacao.style.display = 'none';
+            modalTransacao.style.display = 'none';
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
         });
+
+        // ... (continua na Parte 2)
+        // Continuação do init()
 
         if (btnGerenciarContas) btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); if(modalOverlay) modalOverlay.style.display = 'flex'; });
         if (btnFecharModal) btnFecharModal.addEventListener('click', () => { if(modalOverlay) modalOverlay.style.display = 'none'; });
@@ -498,7 +565,6 @@
             if (confirm('Apagar TUDO?')) { localStorage.clear(); location.reload(); }
         });
 
-        if (fab) fab.addEventListener('click', () => { mostrarTela('transacoes'); abrirModalTransacao(); });
         menuItems.forEach(item => item.addEventListener('click', () => mostrarTela(item.dataset.tela)));
         
         const btnDefinirPlanejamento = getEl('btn-definir-planejamento');
