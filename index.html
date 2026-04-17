@@ -5,30 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>💰 Meu Dinheiro</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Ícones de Bancos Brasileiros - CDN Corrigido -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/matheusmcuba/icones-bancos-brasileiros@1.1/dist/all.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="app-container">
-    <!-- TELA PRINCIPAL (com seletor de meses) -->
+    <!-- TELA PRINCIPAL -->
     <div id="tela-principal" class="tela ativa">
-        <!-- Cabeçalho com título centralizado e setas discretas -->
-        <div class="mes-navegacao-novo">
-            <button class="btn-mes-navegacao" id="mes-anterior-novo">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
+        <!-- Dropdown de meses -->
+        <div class="cabecalho-mes-dropdown">
             <h1 id="mes-atual-titulo">Abril 2026</h1>
-            <button class="btn-mes-navegacao" id="mes-proximo-novo">
+            <button class="btn-dropdown-mes" id="btn-toggle-meses">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
-        <!-- Chips dos meses -->
-        <div class="meses-chips-container">
+        <div class="meses-chips-dropdown" id="meses-chips-dropdown">
             <button class="mes-chip" data-mes="0">JAN</button>
             <button class="mes-chip" data-mes="1">FEV</button>
             <button class="mes-chip" data-mes="2">MAR</button>
@@ -73,12 +66,9 @@
                 <div id="empty-despesas" class="empty-state" style="display: none;"><p>📊 Opa! Você não tem despesas cadastradas esse mês.</p><p style="font-size:14px;">Adicione seus gastos no mês atual para ver seus gráficos.</p></div>
             </div>
         </div>
-        <!-- PLACEHOLDER: PORQUINHO -->
         <div class="card placeholder-card">
             <div class="card-header"><h3>🐷 Seu Consultor Financeiro</h3><span class="badge-em-breve">Em breve</span></div>
-            <div class="placeholder-content">
-                <p style="font-size: 14px; opacity: 0.7;">Um porquinho virtual que fica feliz ou triste conforme sua saúde financeira.</p>
-            </div>
+            <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Um porquinho virtual que fica feliz ou triste conforme sua saúde financeira.</p></div>
         </div>
         <div class="card">
             <div class="card-header"><h3>Planejamento mensal</h3></div>
@@ -86,35 +76,20 @@
         </div>
     </div>
 
-    <!-- TELA TRANSAÇÕES (SEM SALDO PRINCIPAL) -->
+    <!-- TELA TRANSAÇÕES (sem saldo) -->
     <div id="tela-transacoes" class="tela">
-        <div class="mes-navegacao-novo">
-            <button class="btn-mes-navegacao" id="mes-transacoes-anterior-novo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
+        <div class="cabecalho-mes-dropdown">
             <h2 id="mes-transacoes-titulo-novo">Abril 2026</h2>
-            <button class="btn-mes-navegacao" id="mes-transacoes-proximo-novo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
         </div>
-
         <div class="card" style="padding: 0; overflow: hidden;">
             <div id="transacoes-agrupadas-container">
                 <div id="empty-transacoes" class="empty-state" style="padding: 32px 20px;"><p style="font-size: 18px; margin-bottom: 8px;">📭 Ops!</p><p>Você não possui transações registradas.</p><p style="font-size: 14px; margin-top: 16px;">Para criar um novo item, clique no botão (+)</p></div>
                 <div id="grupos-transacoes"></div>
             </div>
         </div>
-
-        <!-- PLACEHOLDER: RANKING -->
         <div class="card placeholder-card" style="margin-top: 16px;">
             <div class="card-header"><h3>🏆 Ranking Anônimo</h3><span class="badge-em-breve">Em breve</span></div>
-            <div class="placeholder-content">
-                <p style="font-size: 14px; opacity: 0.7;">Compare sua taxa de economia com outros usuários de forma anônima.</p>
-            </div>
+            <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Compare sua taxa de economia com outros usuários de forma anônima.</p></div>
         </div>
     </div>
 
@@ -125,9 +100,7 @@
         <div class="card"><div class="empty-state"><p>🚧 Em breve: orçamentos por categoria e metas de economia.</p></div></div>
         <div class="card placeholder-card">
             <div class="card-header"><h3>🎯 Desafios Semanais</h3><span class="badge-em-breve">Em breve</span></div>
-            <div class="placeholder-content">
-                <p style="font-size: 14px; opacity: 0.7;">Participe de desafios colaborativos e ganhe recompensas.</p>
-            </div>
+            <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Participe de desafios colaborativos e ganhe recompensas.</p></div>
         </div>
     </div>
 
@@ -185,14 +158,8 @@
             <div style="width: 40px;"></div>
         </div>
         <div class="config-section">
-            <div class="config-item" onclick="alert('Em breve')">
-                <span class="label">🌙 Tema</span>
-                <span class="valor" id="config-tema-valor">Claro</span>
-            </div>
-            <div class="config-item" onclick="alert('Em breve')">
-                <span class="label">🔔 Notificações</span>
-                <span class="valor">Desativado</span>
-            </div>
+            <div class="config-item" onclick="alert('Em breve')"><span class="label">🌙 Tema</span><span class="valor" id="config-tema-valor">Claro</span></div>
+            <div class="config-item" onclick="alert('Em breve')"><span class="label">🔔 Notificações</span><span class="valor">Desativado</span></div>
         </div>
     </div>
 </div>
@@ -232,7 +199,7 @@
     </div>
 </div>
 
-<!-- MODAL TRANSAÇÃO (com campo Recebido corrigido) -->
+<!-- MODAL TRANSAÇÃO (REFATORADO) -->
 <div class="modal-overlay" id="modal-transacao">
     <div class="modal" style="max-width: 420px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -249,29 +216,58 @@
         <select id="modal-conta" style="background: #f3f4f6; border: none;"><option value="">Selecione a conta...</option></select>
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Data</label>
         <input type="date" id="modal-data">
+        
+        <!-- Descrição com botão de áudio -->
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Descrição</label>
-        <input type="text" id="modal-descricao" placeholder="Ex: Salário, Mercado...">
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="modal-descricao" placeholder="Ex: Salário, Mercado..." style="flex: 1;">
+            <button type="button" id="btn-gravar-audio" class="btn-audio" style="width: auto; margin: 8px 0;" title="Gravar áudio">🎤</button>
+        </div>
+
+        <!-- Categorias como Chips -->
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Categoria</label>
-        <input type="text" id="modal-categoria" placeholder="Ex: Alimentação, Transporte..." list="categorias-sugestoes">
-        <datalist id="categorias-sugestoes">
-            <option value="Alimentação"><option value="Transporte"><option value="Lazer"><option value="Contas"><option value="Salário"><option value="Freelance"><option value="Saúde"><option value="Educação">
-        </datalist>
+        <div class="categorias-chips-container" id="categorias-chips-container">
+            <!-- Chips serão inseridos via JS -->
+        </div>
+        <div style="margin-top: 8px;">
+            <a href="#" id="gerenciar-categorias-link" style="font-size: 13px; color: #2563eb;">+ Gerenciar categorias</a>
+        </div>
+
+        <!-- Anexar -->
         <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
             <span style="font-size: 24px;">📎</span><span style="color: #2563eb; font-weight: 500;">Anexar comprovante</span><span style="margin-left: auto; color: #9ca3af; font-size: 12px;">Em breve</span>
         </div>
+
+        <!-- Mais detalhes (opções expandidas) -->
         <details style="margin-top: 16px;">
             <summary style="color: #2563eb; font-weight: 500; cursor: pointer;">Mais detalhes</summary>
             <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 16px;">
                 <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="modal-recebido" checked> Recebido</label>
-                <label style="display: block; margin-top: 12px;">Bonificação</label><input type="text" placeholder="Opcional" style="background: white;">
-                <label style="display: block; margin-top: 12px;">Carteira</label><input type="text" placeholder="Opcional" style="background: white;">
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px;"><input type="checkbox" id="modal-receita-fixa"> Receita fixa</label>
+                <div id="repetir-container" style="display: none; margin-top: 12px;">
+                    <label>Repetir</label>
+                    <select id="modal-repetir">
+                        <option value="nunca">Nunca</option>
+                        <option value="semanal">Semanal</option>
+                        <option value="mensal">Mensal</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+                <label style="display: block; margin-top: 12px;">Observação</label>
+                <input type="text" id="modal-observacao" placeholder="Opcional">
+                <label style="display: block; margin-top: 12px;">Tags</label>
+                <input type="text" id="modal-tags" placeholder="Ex: urgente, família">
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px;"><input type="checkbox" id="modal-lembrar"> Lembrar-me</label>
             </div>
         </details>
-        <button id="salvar-transacao-modal" style="margin-top: 24px; background: #059669; padding: 16px;">Salvar</button>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button id="salvar-transacao-modal" style="flex: 2; background: #059669;">Salvar</button>
+            <button id="salvar-continuar-modal" style="flex: 1; background: #2563eb;">Salvar e Continuar</button>
+        </div>
     </div>
 </div>
 
-<!-- Scripts externos -->
 <script src="exportar.js"></script>
 <script src="app.js"></script>
 </body>
