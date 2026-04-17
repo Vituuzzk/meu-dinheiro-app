@@ -1,6 +1,6 @@
 (function(){
     "use strict";
-    const APP_VERSION = '2.3.0';
+    const APP_VERSION = '2.4.0';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
 
     // ---------- ESTADO ----------
@@ -8,6 +8,9 @@
     let transacoes = [];
     let mesAtual = new Date().getMonth();
     let anoAtual = new Date().getFullYear();
+    
+    // Planejamento
+    let orcamentos = {}; // { categoria: valorLimite }
 
     let categorias = [
         { nome: 'Alimentação', icone: '🍔', cor: '#f97316' },
@@ -21,6 +24,7 @@
     ];
 
     let chartInstance = null;
+    let planejamentoChartInstance = null;
     let anoAnteriorSelecao = anoAtual;
     let mesAnteriorSelecao = mesAtual;
     let categoriaSelecionada = 'Alimentação';
@@ -28,7 +32,7 @@
 
     // ---------- ELEMENTOS ----------
     const getEl = (id) => document.getElementById(id);
-    const anoAtualTitulo = getEl('ano-atual-titulo');
+    const mesAtualTitulo = getEl('mes-atual-titulo');
     const mesTransacoesTitulo = getEl('mes-transacoes-titulo');
     const saldoTotalValor = getEl('saldo-total-valor');
     const totalReceitasMes = getEl('total-receitas-mes');
@@ -37,6 +41,7 @@
     const totalContasResumo = getEl('total-contas-resumo');
     const cartoesResumoContainer = getEl('cartoes-resumo-container');
     const ctx = getEl('grafico-categorias')?.getContext('2d');
+    const ctxPlanejamento = getEl('grafico-planejamento')?.getContext('2d');
     const emptyDespesas = getEl('empty-despesas');
 
     const modalTransacao = getEl('modal-transacao');
@@ -74,6 +79,14 @@
     const cartaoDiaVencimento = getEl('cartao-dia-vencimento');
     const btnCriarConta = getEl('btn-criar-conta');
     const btnLimparTudo = getEl('btn-limpar-tudo');
+
+    // Planejamento
+    const containerPlanejamento = getEl('planejamento-container');
+    const btnDefinirPlanejamento = getEl('btn-definir-planejamento');
+    const modalPlanejamento = getEl('modal-planejamento');
+    const fecharModalPlanejamento = getEl('fechar-modal-planejamento');
+    const salvarPlanejamentoBtn = getEl('salvar-planejamento');
+    const orcamentosContainer = getEl('orcamentos-container');
 
     const telas = {
         principal: getEl('tela-principal'),
@@ -161,9 +174,11 @@
             transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
             const catsSalvas = localStorage.getItem('categorias');
             if (catsSalvas) categorias = JSON.parse(catsSalvas);
+            const orcSalvos = localStorage.getItem('orcamentos');
+            if (orcSalvos) orcamentos = JSON.parse(orcSalvos);
         } catch(e) { contas = []; transacoes = []; }
         transacoes.forEach(t => { if (t.tipo === 'receita' && t.recebido === undefined) t.recebido = true; });
-        salvarTransacoes(); salvarCategorias();
+        salvarTransacoes(); salvarCategorias(); salvarOrcamentos();
         if (contas.length === 0) {
             contas.push({ id: gerarId(), nome: 'Carteira', tipo: 'normal', saldoInicial: 0, incluirNoTotal: true });
             salvarContas();
@@ -172,6 +187,7 @@
     function salvarContas() { localStorage.setItem('contas', JSON.stringify(contas)); }
     function salvarTransacoes() { localStorage.setItem('transacoes', JSON.stringify(transacoes)); }
     function salvarCategorias() { localStorage.setItem('categorias', JSON.stringify(categorias)); }
+    function salvarOrcamentos() { localStorage.setItem('orcamentos', JSON.stringify(orcamentos)); }
 
     // ---------- CÁLCULOS ----------
     function getDataLimite() { return new Date(anoAtual, mesAtual + 1, 0); }
@@ -220,11 +236,22 @@
             return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
         }).reduce((s, t) => s + t.valor, 0);
     }
+    function calcularGastosPorCategoria() {
+        const gastos = {};
+        transacoes.filter(t => {
+            if (t.tipo !== 'despesa') return false;
+            const d = new Date(t.data + 'T00:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+        }).forEach(t => {
+            gastos[t.categoria] = (gastos[t.categoria] || 0) + t.valor;
+        });
+        return gastos;
+    }
 
     // ---------- RENDER ----------
     function atualizarCabecalho() {
-        if (anoAtualTitulo) anoAtualTitulo.textContent = anoAtual;
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        if (mesAtualTitulo) mesAtualTitulo.textContent = meses[mesAtual];
         if (mesTransacoesTitulo) mesTransacoesTitulo.textContent = `${meses[mesAtual]} ${anoAtual}`;
         mesChips.forEach(chip => chip.classList.toggle('ativo', parseInt(chip.dataset.mes) === mesAtual));
     }
@@ -343,6 +370,80 @@
         }
     }
 
+    function renderizarPlanejamento() {
+        if (!containerPlanejamento) return;
+        const gastos = calcularGastosPorCategoria();
+        const categoriasPlanejadas = categorias.filter(c => orcamentos[c.nome] !== undefined && orcamentos[c.nome] > 0);
+        
+        if (categoriasPlanejadas.length === 0) {
+            containerPlanejamento.innerHTML = `<div class="empty-state"><p>📝 Nenhum orçamento definido para este mês.</p></div>`;
+            return;
+        }
+
+        let html = '';
+        categoriasPlanejadas.forEach(cat => {
+            const limite = orcamentos[cat.nome];
+            const gasto = gastos[cat.nome] || 0;
+            const percentual = limite > 0 ? (gasto / limite) * 100 : 0;
+            const corBarra = percentual > 100 ? '#dc2626' : '#059669';
+            
+            html += `
+                <div class="orcamento-item">
+                    <div class="orcamento-header">
+                        <span>${cat.icone} ${cat.nome}</span>
+                        <span>${formatarMoeda(gasto)} / ${formatarMoeda(limite)}</span>
+                    </div>
+                    <div class="limite-barra-container">
+                        <div class="limite-barra">
+                            <div class="limite-barra-preenchida" style="width: ${Math.min(percentual, 100)}%; background: ${corBarra};"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        containerPlanejamento.innerHTML = html;
+
+        // Gráfico de planejamento
+        if (ctxPlanejamento) {
+            const labels = categoriasPlanejadas.map(c => c.nome);
+            const dataGastos = categoriasPlanejadas.map(c => gastos[c.nome] || 0);
+            const dataLimites = categoriasPlanejadas.map(c => orcamentos[c.nome]);
+            
+            if (planejamentoChartInstance) planejamentoChartInstance.destroy();
+            planejamentoChartInstance = new Chart(ctxPlanejamento, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Gasto', data: dataGastos, backgroundColor: '#f97316' },
+                        { label: 'Limite', data: dataLimites, backgroundColor: '#3b82f6' }
+                    ]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+    }
+
+    function abrirModalPlanejamento() {
+        if (!orcamentosContainer) return;
+        let html = '';
+        categorias.forEach(cat => {
+            const valorAtual = orcamentos[cat.nome] || '';
+            html += `
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px;">${cat.icone} ${cat.nome}</label>
+                    <input type="text" class="moeda orcamento-input" data-categoria="${cat.nome}" placeholder="R$ 0,00" value="${valorAtual ? formatarMoedaInput(valorAtual.toString().replace('.', ',')) : ''}">
+                </div>
+            `;
+        });
+        orcamentosContainer.innerHTML = html;
+        configurarMascaras();
+        modalPlanejamento.style.display = 'flex';
+    }
+
+    // Continua na Parte 2...
+    // ---------- CONTINUAÇÃO ----------
+
     function atualizarSelectModal() {
         if (!modalConta) return;
         modalConta.innerHTML = '<option value="">Selecione a conta...</option>';
@@ -394,6 +495,7 @@
         menuItems.forEach(item => item.classList.toggle('ativo', item.dataset.tela === id));
         if (id === 'principal') renderizarDashboard();
         if (id === 'transacoes') renderizarTransacoesAgrupadas();
+        if (id === 'planejamento') renderizarPlanejamento();
     }
 
     function renderizarListaContasModal() {
@@ -417,7 +519,7 @@
 
     // ---------- BACKUP ----------
     function exportarBackup() {
-        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, categorias };
+        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, categorias, orcamentos };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -442,7 +544,8 @@
                     contas = backup.contas;
                     transacoes = backup.transacoes;
                     if (backup.categorias) categorias = backup.categorias;
-                    salvarContas(); salvarTransacoes(); salvarCategorias();
+                    if (backup.orcamentos) orcamentos = backup.orcamentos;
+                    salvarContas(); salvarTransacoes(); salvarCategorias(); salvarOrcamentos();
                     location.reload();
                 }
             } catch (error) { alert('❌ Arquivo de backup inválido.'); }
@@ -480,8 +583,8 @@
             atualizarCabecalho();
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
-            mesesDropdown.style.display = 'none';
-            btnToggleMeses.classList.remove('aberto');
+            if (mesesDropdown) mesesDropdown.style.display = 'none';
+            if (btnToggleMeses) btnToggleMeses.classList.remove('aberto');
         };
 
         btnAnoAnterior.addEventListener('click', () => {
@@ -665,13 +768,29 @@
             if (confirm('Apagar TUDO?')) { localStorage.clear(); location.reload(); }
         });
 
+        // Planejamento
+        if (btnDefinirPlanejamento) btnDefinirPlanejamento.addEventListener('click', () => abrirModalPlanejamento());
+        if (fecharModalPlanejamento) fecharModalPlanejamento.addEventListener('click', () => modalPlanejamento.style.display = 'none');
+        if (salvarPlanejamentoBtn) salvarPlanejamentoBtn.addEventListener('click', () => {
+            document.querySelectorAll('.orcamento-input').forEach(input => {
+                const categoria = input.dataset.categoria;
+                const valor = converterMoedaParaFloat(input.value);
+                if (valor > 0) {
+                    orcamentos[categoria] = valor;
+                } else {
+                    delete orcamentos[categoria];
+                }
+            });
+            salvarOrcamentos();
+            modalPlanejamento.style.display = 'none';
+            renderizarPlanejamento();
+        });
+
         menuItems.forEach(item => item.addEventListener('click', () => mostrarTela(item.dataset.tela)));
-        
-        const btnDefinirPlanejamento = getEl('btn-definir-planejamento');
-        if (btnDefinirPlanejamento) btnDefinirPlanejamento.addEventListener('click', () => mostrarTela('planejamento'));
 
         if (modalOverlay) modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
         if (modalTransacao) modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) modalTransacao.style.display = 'none'; });
+        if (modalPlanejamento) modalPlanejamento.addEventListener('click', e => { if (e.target === modalPlanejamento) modalPlanejamento.style.display = 'none'; });
 
         // Backup
         const btnExportarBackup = getEl('btn-exportar-backup');
