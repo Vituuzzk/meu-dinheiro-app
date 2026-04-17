@@ -837,3 +837,37 @@ body.dark-theme .perfil-foto {
     background: #1a3a5c;
     color: #64b5f6;
 }
+/* Botões de alternância Receita/Despesa - Mais compactos */
+.tipo-transacao-btn {
+    padding: 10px 8px;          /* Reduzido de 14px */
+    border: none;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 14px;            /* Reduzido */
+    color: white;
+    transition: all 0.15s ease;
+    margin: 0;
+    flex: 1;
+}
+
+/* Cor de fundo padrão para Despesa (inativo) */
+#tipo-despesa-btn {
+    background: #9ca3af !important;
+}
+
+/* Cor de fundo para Despesa ATIVO */
+#tipo-despesa-btn.ativo {
+    background: #dc2626 !important;  /* Vermelho */
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
+/* Cor de fundo para Receita ATIVO */
+#tipo-receita-btn.ativo {
+    background: #10b981 !important;  /* Verde */
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+/* Remove estilos inline conflitantes (se houver) */
+.tipo-transacao-btn:not(.ativo) {
+    opacity: 0.8;
+}
