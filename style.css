@@ -3,10 +3,66 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .app-container { max-width: 480px; width: 100%; margin: 0 auto; padding: 16px 16px 0; }
 .tela { display: none; }
 .tela.ativa { display: block; }
-.cabecalho-mes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.cabecalho-mes h1 { font-size: 28px; font-weight: 700; color: #065f46; }
-.mes-navegacao { display: flex; gap: 8px; }
-.mes-navegacao button { background: white; border: 1px solid #a7f3d0; border-radius: 20px; padding: 8px 12px; font-size: 14px; width: auto; margin: 0; color: #374151; }
+
+/* Cabeçalho com dropdown de meses */
+.cabecalho-mes-dropdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    position: relative;
+}
+.cabecalho-mes-dropdown h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #065f46;
+    margin: 0;
+}
+.btn-dropdown-mes {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #059669;
+    width: auto;
+    margin: 0;
+    transition: transform 0.2s;
+}
+.btn-dropdown-mes.aberto {
+    transform: rotate(180deg);
+}
+.meses-chips-dropdown {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 0 16px;
+    margin-bottom: 8px;
+}
+.meses-chips-dropdown.ativo {
+    display: flex;
+}
+.mes-chip {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #d1fae5;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #065f46;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+    margin: 0;
+}
+.mes-chip.ativo {
+    background: #059669;
+    color: white;
+    border-color: #059669;
+}
+
 .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 16px; border: 1px solid #d1fae5; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .card-header h3 { font-size: 16px; font-weight: 600; color: #374151; }
@@ -27,8 +83,40 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .conta-detalhes .nome { font-weight: 600; margin-bottom: 2px; }
 .conta-detalhes .subtitulo { font-size: 12px; color: #6b7280; }
 .conta-saldo { font-weight: 700; font-size: 18px; }
+
+/* Cartão de Crédito - Barra de limite */
 .cartao-resumo-item { background: #f8fafc; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
 .cartao-resumo-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.limite-barra-container {
+    margin: 8px 0;
+}
+.limite-barra {
+    width: 100%;
+    height: 8px;
+    background: #e0e7ff;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.limite-barra-preenchida {
+    height: 100%;
+    background: #059669;
+    border-radius: 4px;
+}
+.cartao-datas {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+.melhor-dia-compra {
+    background: #d1fae5;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: #065f46;
+}
+
 .empty-state { text-align: center; padding: 24px 16px; color: #6b7280; }
 .empty-state p { margin-bottom: 16px; }
 .btn-outline { background: transparent; border: 1.5px solid #2563eb; color: #2563eb; font-weight: 600; width: auto; padding: 12px 24px; margin: 0 auto; display: inline-block; }
@@ -59,7 +147,7 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .transacao-valor.receita { color: #10b981; }
 .transacao-valor.despesa { color: #dc2626; }
 
-/* Estilos para a tela Mais (Abas e Listas) */
+/* Abas e Configurações (mantidos) */
 .abas-container { display: flex; background: white; border-radius: 20px; padding: 6px; margin-bottom: 20px; border: 1px solid #d1fae5; }
 .aba-btn { flex: 1; padding: 12px 8px; background: transparent; border: none; border-radius: 16px; font-weight: 600; font-size: 14px; color: #6b7280; cursor: pointer; transition: 0.2s; margin: 0; }
 .aba-btn.ativo { background: #059669; color: white; }
@@ -69,8 +157,6 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .opcao-item { padding: 18px 20px; border-bottom: 1px solid #f3f4f6; font-size: 16px; font-weight: 500; color: #1f2937; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 12px; }
 .opcao-item:last-child { border-bottom: none; }
 .opcao-item:hover { background: #f9fafb; }
-
-/* Configurações */
 #tela-configuracoes { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f0fdf4; z-index: 500; overflow-y: auto; padding-bottom: 20px; display: none; }
 .cabecalho-config { display: flex; align-items: center; padding: 20px 16px; background: white; border-bottom: 1px solid #d1fae5; margin-bottom: 20px; }
 .cabecalho-config h2 { flex: 1; text-align: center; font-size: 20px; font-weight: 700; color: #065f46; margin: 0; }
@@ -81,58 +167,42 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .config-item .label { font-weight: 500; color: #1f2937; }
 .config-item .valor { color: #6b7280; }
 
-/* Nova navegação de mês (Transações) */
-.mes-navegacao-novo { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 16px; }
-.btn-mes-navegacao { width: 40px; height: 40px; border-radius: 20px; background: white; border: 1px solid #d1fae5; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin: 0; color: #059669; transition: background 0.2s; }
-.btn-mes-navegacao:hover { background: #d1fae5; }
-.mes-navegacao-novo h2 { font-size: 20px; font-weight: 700; color: #065f46; margin: 0; }
+/* Tags de Categorias (Modal) */
+.categorias-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+.categoria-chip {
+    padding: 8px 14px;
+    background: #f3f4f6;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.categoria-chip.ativo {
+    background: #059669;
+    color: white;
+}
+.categoria-chip:hover {
+    background: #e0e7ff;
+}
 
-/* Cards de Placeholder (Em breve) */
+/* Placeholder */
 .placeholder-card { opacity: 0.9; border: 1px dashed #a7f3d0; background: #f9fefb; }
 .badge-em-breve { background: #e5e7eb; color: #6b7280; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 20px; text-transform: uppercase; }
 .placeholder-content { padding: 12px 0 4px; }
 
-/* Chips de meses (Tela Principal) */
-.mes-navegacao-novo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-.mes-navegacao-novo h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: #065f46;
-}
-.meses-chips-container {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 6px;
-    padding: 8px 0 16px;
-    margin-bottom: 8px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-.meses-chips-container::-webkit-scrollbar {
-    display: none;
-}
-.mes-chip {
-    flex: 0 0 auto;
-    padding: 8px 12px;
-    background: white;
-    border: 1px solid #d1fae5;
-    border-radius: 24px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #065f46;
-    cursor: pointer;
-    transition: all 0.2s;
+/* Botão de áudio */
+.btn-audio {
     width: auto;
-    margin: 0;
-}
-.mes-chip.ativo {
-    background: #059669;
-    color: white;
-    border-color: #059669;
+    padding: 8px 12px;
+    margin-left: 8px;
+    background: #f3f4f6;
+    color: #374151;
 }
