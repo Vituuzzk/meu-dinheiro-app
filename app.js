@@ -10,15 +10,15 @@
     let anoAtual = new Date().getFullYear();
     let orcamentos = {};
     let categorias = [
-    { nome: 'Alimentação', icone: 'utensils', cor: '#f97316' },
-    { nome: 'Transporte', icone: 'car', cor: '#3b82f6' },
-    { nome: 'Lazer', icone: 'popcorn', cor: '#10b981' },
-    { nome: 'Contas', icone: 'file-text', cor: '#8b5cf6' },
-    { nome: 'Salário', icone: 'briefcase', cor: '#ec4899' },
-    { nome: 'Freelance', icone: 'laptop', cor: '#94a3b8' },
-    { nome: 'Saúde', icone: 'heart-pulse', cor: '#ef4444' },
-    { nome: 'Educação', icone: 'book-open', cor: '#14b8a6' }
-];
+        { nome: 'Alimentação', icone: 'utensils', cor: '#f97316' },
+        { nome: 'Transporte', icone: 'car', cor: '#3b82f6' },
+        { nome: 'Lazer', icone: 'popcorn', cor: '#10b981' },
+        { nome: 'Contas', icone: 'file-text', cor: '#8b5cf6' },
+        { nome: 'Salário', icone: 'briefcase', cor: '#ec4899' },
+        { nome: 'Freelance', icone: 'laptop', cor: '#94a3b8' },
+        { nome: 'Saúde', icone: 'heart-pulse', cor: '#ef4444' },
+        { nome: 'Educação', icone: 'book-open', cor: '#14b8a6' }
+    ];
 
     let chartInstance = null;
     let planejamentoChartInstance = null;
@@ -357,13 +357,13 @@
             let html = '';
             for (const [data, transacoesDia] of Object.entries(grupos)) {
                 html += `<div class="grupo-transacoes"><div class="grupo-data">${data}</div>`;
-                transacoesDia.forEach(t => {
+                transacoesDia.forEach((t, index) => {
                     const conta = contas.find(c => c.id === t.contaId);
                     const icone = t.tipo === 'receita' ? '📈' : '📉';
                     const classeValor = t.tipo === 'receita' ? 'receita' : 'despesa';
                     const prefixo = t.tipo === 'receita' ? '+' : '-';
                     const descricao = t.descricao || t.categoria;
-                    html += `<div class="transacao-item"><div class="transacao-icone">${icone}</div><div class="transacao-info"><div class="transacao-descricao">${descricao}</div><div class="transacao-conta">${conta?.nome || 'Conta'} • ${t.categoria}</div></div><div class="transacao-valor ${classeValor}">${prefixo} ${formatarMoeda(t.valor)}</div></div>`;
+                    html += `<div class="transacao-item" style="animation-delay: ${index * 0.05}s"><div class="transacao-icone">${icone}</div><div class="transacao-info"><div class="transacao-descricao">${descricao}</div><div class="transacao-conta">${conta?.nome || 'Conta'} • ${t.categoria}</div></div><div class="transacao-valor ${classeValor}">${prefixo} ${formatarMoeda(t.valor)}</div></div>`;
                 });
                 html += `</div>`;
             }
@@ -431,17 +431,19 @@
             const valorAtual = orcamentos[cat.nome] || '';
             html += `
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 4px;">${cat.icone} ${cat.nome}</label>
+                    <label style="display: block; margin-bottom: 4px;"><i data-lucide="${cat.icone}" style="width: 18px; height: 18px; margin-right: 6px;"></i> ${cat.nome}</label>
                     <input type="text" class="moeda orcamento-input" data-categoria="${cat.nome}" placeholder="R$ 0,00" value="${valorAtual ? formatarMoedaInput(valorAtual.toString().replace('.', ',')) : ''}">
                 </div>
             `;
         });
         orcamentosContainer.innerHTML = html;
+        lucide.createIcons();
         configurarMascaras();
         modalPlanejamento.style.display = 'flex';
+        setTimeout(() => modalPlanejamento.classList.add('ativo'), 10);
     }
 
-    // ... Continua na Parte 2 ...
+    // Continua na Parte 2...
     // ---------- CONTINUAÇÃO ----------
     function atualizarSelectModal() {
         if (!modalConta) return;
@@ -460,14 +462,24 @@
         categorias.forEach(cat => {
             const chip = document.createElement('span');
             chip.className = `categoria-chip ${categoriaSelecionada === cat.nome ? 'ativo' : ''}`;
-            chip.innerHTML = `${cat.icone} ${cat.nome}`;
             chip.dataset.categoria = cat.nome;
+            
+            const icone = document.createElement('i');
+            icone.setAttribute('data-lucide', cat.icone);
+            icone.style.width = '18px';
+            icone.style.height = '18px';
+            icone.style.marginRight = '6px';
+            
+            chip.appendChild(icone);
+            chip.appendChild(document.createTextNode(` ${cat.nome}`));
+            
             chip.addEventListener('click', () => {
                 categoriaSelecionada = cat.nome;
                 renderizarChipsCategorias();
             });
             categoriasChipsContainer.appendChild(chip);
         });
+        lucide.createIcons();
     }
 
     function abrirModalTransacao() {
@@ -486,6 +498,7 @@
         }
         renderizarChipsCategorias();
         modalTransacao.style.display = 'flex';
+        setTimeout(() => modalTransacao.classList.add('ativo'), 10);
     }
 
     function mostrarTela(id) {
@@ -575,6 +588,7 @@
                 if (novaContaSaldoInicial) novaContaSaldoInicial.value = '0,00';
                 if (novaContaIncluirTotal) novaContaIncluirTotal.checked = true;
                 if (modalOverlay) modalOverlay.style.display = 'flex';
+                setTimeout(() => modalOverlay.classList.add('ativo'), 10);
             });
         }
 
@@ -695,7 +709,10 @@
             
             transacoes.push(novaTransacao);
             salvarTransacoes();
-            if (fecharModal) modalTransacao.style.display = 'none';
+            if (fecharModal) {
+                modalTransacao.classList.remove('ativo');
+                setTimeout(() => modalTransacao.style.display = 'none', 300);
+            }
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
             return true;
@@ -706,10 +723,13 @@
             if (salvarTransacao(false)) abrirModalTransacao();
         });
 
-        fecharModalTransacao.addEventListener('click', () => modalTransacao.style.display = 'none');
+        fecharModalTransacao.addEventListener('click', () => {
+            modalTransacao.classList.remove('ativo');
+            setTimeout(() => modalTransacao.style.display = 'none', 300);
+        });
 
-        if (btnGerenciarContas) btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); if(modalOverlay) modalOverlay.style.display = 'flex'; });
-        if (btnFecharModal) btnFecharModal.addEventListener('click', () => { if(modalOverlay) modalOverlay.style.display = 'none'; });
+        if (btnGerenciarContas) btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); if(modalOverlay) { modalOverlay.style.display = 'flex'; setTimeout(() => modalOverlay.classList.add('ativo'), 10); } });
+        if (btnFecharModal) btnFecharModal.addEventListener('click', () => { modalOverlay.classList.remove('ativo'); setTimeout(() => modalOverlay.style.display = 'none', 300); });
         
         const adicionarCartaoLink = getEl('adicionar-cartao-link');
         if (adicionarCartaoLink) adicionarCartaoLink.addEventListener('click', (e) => {
@@ -717,14 +737,14 @@
             document.querySelector('input[value="credito"]').checked = true;
             if(camposContaNormal) camposContaNormal.style.display = 'none';
             if(camposCartaoCredito) camposCartaoCredito.style.display = 'block';
-            if(modalOverlay) modalOverlay.style.display = 'flex';
+            if(modalOverlay) { modalOverlay.style.display = 'flex'; setTimeout(() => modalOverlay.classList.add('ativo'), 10); }
         });
         
         const verTodasContas = getEl('ver-todas-contas');
         if (verTodasContas) verTodasContas.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarTela('mais');
-            setTimeout(() => { renderizarListaContasModal(); if(modalOverlay) modalOverlay.style.display = 'flex'; }, 100);
+            setTimeout(() => { renderizarListaContasModal(); if(modalOverlay) { modalOverlay.style.display = 'flex'; setTimeout(() => modalOverlay.classList.add('ativo'), 10); } }, 100);
         });
 
         radioTipoConta.forEach(r => r.addEventListener('change', () => {
@@ -750,7 +770,7 @@
             if(novaContaNome) novaContaNome.value = ''; 
             if(novaContaSaldoInicial) novaContaSaldoInicial.value = '0,00'; 
             if(cartaoLimite) cartaoLimite.value = '0,00';
-            if(modalOverlay) modalOverlay.style.display = 'none';
+            if(modalOverlay) { modalOverlay.classList.remove('ativo'); setTimeout(() => modalOverlay.style.display = 'none', 300); }
             renderizarDashboard(); renderizarTransacoesAgrupadas();
         });
 
@@ -760,7 +780,10 @@
 
         // Planejamento
         if (btnDefinirPlanejamento) btnDefinirPlanejamento.addEventListener('click', () => abrirModalPlanejamento());
-        if (fecharModalPlanejamento) fecharModalPlanejamento.addEventListener('click', () => modalPlanejamento.style.display = 'none');
+        if (fecharModalPlanejamento) fecharModalPlanejamento.addEventListener('click', () => {
+            modalPlanejamento.classList.remove('ativo');
+            setTimeout(() => modalPlanejamento.style.display = 'none', 300);
+        });
         if (salvarPlanejamentoBtn) salvarPlanejamentoBtn.addEventListener('click', () => {
             document.querySelectorAll('.orcamento-input').forEach(input => {
                 const categoria = input.dataset.categoria;
@@ -772,15 +795,16 @@
                 }
             });
             salvarOrcamentos();
-            modalPlanejamento.style.display = 'none';
+            modalPlanejamento.classList.remove('ativo');
+            setTimeout(() => modalPlanejamento.style.display = 'none', 300);
             renderizarPlanejamento();
         });
 
         menuItems.forEach(item => item.addEventListener('click', () => mostrarTela(item.dataset.tela)));
 
-        if (modalOverlay) modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
-        if (modalTransacao) modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) modalTransacao.style.display = 'none'; });
-        if (modalPlanejamento) modalPlanejamento.addEventListener('click', e => { if (e.target === modalPlanejamento) modalPlanejamento.style.display = 'none'; });
+        if (modalOverlay) modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) { modalOverlay.classList.remove('ativo'); setTimeout(() => modalOverlay.style.display = 'none', 300); } });
+        if (modalTransacao) modalTransacao.addEventListener('click', e => { if (e.target === modalTransacao) { modalTransacao.classList.remove('ativo'); setTimeout(() => modalTransacao.style.display = 'none', 300); } });
+        if (modalPlanejamento) modalPlanejamento.addEventListener('click', e => { if (e.target === modalPlanejamento) { modalPlanejamento.classList.remove('ativo'); setTimeout(() => modalPlanejamento.style.display = 'none', 300); } });
 
         // Backup
         const btnExportarBackup = getEl('btn-exportar-backup');
@@ -809,8 +833,8 @@
                 if (!opcao) return;
                 const acao = opcao.dataset.acao;
                 switch (acao) {
-                    case 'contas': renderizarListaContasModal(); if(modalOverlay) modalOverlay.style.display = 'flex'; break;
-                    case 'cartoes': document.querySelector('input[value="credito"]').checked = true; if(camposContaNormal) camposContaNormal.style.display = 'none'; if(camposCartaoCredito) camposCartaoCredito.style.display = 'block'; if(modalOverlay) modalOverlay.style.display = 'flex'; break;
+                    case 'contas': renderizarListaContasModal(); if(modalOverlay) { modalOverlay.style.display = 'flex'; setTimeout(() => modalOverlay.classList.add('ativo'), 10); } break;
+                    case 'cartoes': document.querySelector('input[value="credito"]').checked = true; if(camposContaNormal) camposContaNormal.style.display = 'none'; if(camposCartaoCredito) camposCartaoCredito.style.display = 'block'; if(modalOverlay) { modalOverlay.style.display = 'flex'; setTimeout(() => modalOverlay.classList.add('ativo'), 10); } break;
                     case 'exportar-excel': if (typeof exportarParaCSV === 'function') exportarParaCSV(); else alert('Em breve'); break;
                     case 'backup-exportar': exportarBackup(); break;
                     case 'backup-importar': if(inputImportarBackup) inputImportarBackup.click(); break;
