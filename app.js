@@ -1,6 +1,6 @@
 (function(){
     "use strict";
-    const APP_VERSION = '1.6.0'; // Versão do app
+    const APP_VERSION = '2.0.0';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
 
     // ---------- ESTADO ----------
@@ -9,9 +9,20 @@
     let mesAtual = new Date().getMonth();
     let anoAtual = new Date().getFullYear();
 
-    // ---------- ELEMENTOS (com verificações) ----------
+    // Categorias padrão (usaremos para os chips)
+    let categorias = [
+        { nome: 'Alimentação', icone: '🍔', cor: '#f97316' },
+        { nome: 'Transporte', icone: '🚗', cor: '#3b82f6' },
+        { nome: 'Lazer', icone: '🎉', cor: '#10b981' },
+        { nome: 'Contas', icone: '📄', cor: '#8b5cf6' },
+        { nome: 'Salário', icone: '💼', cor: '#ec4899' },
+        { nome: 'Freelance', icone: '💻', cor: '#94a3b8' },
+        { nome: 'Saúde', icone: '🏥', cor: '#ef4444' },
+        { nome: 'Educação', icone: '📚', cor: '#14b8a6' }
+    ];
+
+    // ---------- ELEMENTOS ----------
     const getEl = (id) => document.getElementById(id);
-    
     const mesAtualTitulo = getEl('mes-atual-titulo');
     const mesTransacoesTituloNovo = getEl('mes-transacoes-titulo-novo');
     const saldoTotalValor = getEl('saldo-total-valor');
@@ -24,6 +35,7 @@
     const emptyDespesas = getEl('empty-despesas');
     let chartInstance = null;
 
+    // Modal Transação
     const modalTransacao = getEl('modal-transacao');
     const modalTitulo = getEl('modal-titulo');
     const tipoReceitaBtn = getEl('tipo-receita-btn');
@@ -32,12 +44,21 @@
     const modalConta = getEl('modal-conta');
     const modalData = getEl('modal-data');
     const modalDescricao = getEl('modal-descricao');
-    const modalCategoria = getEl('modal-categoria');
     const salvarTransacaoModal = getEl('salvar-transacao-modal');
+    const salvarContinuarModal = getEl('salvar-continuar-modal');
     const fecharModalTransacao = getEl('fechar-modal-transacao');
     const checkboxRecebido = getEl('modal-recebido');
+    const checkboxReceitaFixa = getEl('modal-receita-fixa');
+    const repetirContainer = getEl('repetir-container');
+    const modalRepetir = getEl('modal-repetir');
+    const modalObservacao = getEl('modal-observacao');
+    const modalTags = getEl('modal-tags');
+    const modalLembrar = getEl('modal-lembrar');
+    const categoriasChipsContainer = getEl('categorias-chips-container');
     let tipoTransacaoAtual = 'receita';
+    let categoriaSelecionada = 'Alimentação';
 
+    // Modal Contas
     const modalOverlay = getEl('modal-contas');
     const btnGerenciarContas = getEl('btn-abrir-modal-contas');
     const btnFecharModal = getEl('btn-fechar-modal');
@@ -69,14 +90,11 @@
     const telaConfiguracoes = getEl('tela-configuracoes');
     const btnVoltarConfig = getEl('btn-voltar-configuracoes');
 
-    const btnMesTransacoesAnteriorNovo = getEl('mes-transacoes-anterior-novo');
-    const btnMesTransacoesProximoNovo = getEl('mes-transacoes-proximo-novo');
-
     const btnAdicionarContaPrincipal = getEl('adicionar-conta-principal');
 
-    // Novos elementos dos chips de meses
-    const btnMesAnteriorNovo = getEl('mes-anterior-novo');
-    const btnMesProximoNovo = getEl('mes-proximo-novo');
+    // Dropdown de meses
+    const btnToggleMeses = getEl('btn-toggle-meses');
+    const mesesDropdown = getEl('meses-chips-dropdown');
     const mesChips = document.querySelectorAll('.mes-chip');
 
     // ---------- MÁSCARA ----------
@@ -121,20 +139,20 @@
         }
     }
 
-    // ---------- PERSISTÊNCIA (com migração de receitas) ----------
+    // ---------- PERSISTÊNCIA ----------
     function carregarDados() {
         try {
             contas = JSON.parse(localStorage.getItem('contas')) || [];
             transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+            const catsSalvas = localStorage.getItem('categorias');
+            if (catsSalvas) categorias = JSON.parse(catsSalvas);
         } catch(e) { contas = []; transacoes = []; }
         
-        // Migração: garantir que receitas tenham o campo 'recebido'
         transacoes.forEach(t => {
-            if (t.tipo === 'receita' && t.recebido === undefined) {
-                t.recebido = true; // receitas antigas são consideradas recebidas
-            }
+            if (t.tipo === 'receita' && t.recebido === undefined) t.recebido = true;
         });
         salvarTransacoes();
+        salvarCategorias();
         
         if (contas.length === 0) {
             contas.push({ id: gerarId(), nome: 'Carteira', tipo: 'normal', saldoInicial: 0, incluirNoTotal: true });
@@ -143,8 +161,12 @@
     }
     function salvarContas() { localStorage.setItem('contas', JSON.stringify(contas)); }
     function salvarTransacoes() { localStorage.setItem('transacoes', JSON.stringify(transacoes)); }
+    function salvarCategorias() { localStorage.setItem('categorias', JSON.stringify(categorias)); }
 
-    // ---------- CÁLCULOS (com correção de receitas futuras) ----------
+    // ---------- CÁLCULOS (com filtro por data limite) ----------
+    function getDataLimite() {
+        return new Date(anoAtual, mesAtual + 1, 0);
+    }
     function calcularFaturaAtual(cartaoId) {
         return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
     }
@@ -152,11 +174,14 @@
         const conta = contas.find(c => c.id === contaId);
         if (!conta) return 0;
         if (conta.tipo === 'credito') return -calcularFaturaAtual(contaId);
+        
+        const dataLimite = getDataLimite();
         let saldo = conta.saldoInicial;
         transacoes.forEach(t => {
+            const dataTransacao = new Date(t.data + 'T00:00:00');
+            if (dataTransacao > dataLimite) return;
             if (t.tipo === 'despesa' && t.contaId === contaId) saldo -= t.valor;
             else if (t.tipo === 'receita' && t.contaId === contaId) {
-                // Só soma se tiver recebido
                 const foiRecebida = (t.recebido !== undefined) ? t.recebido : true;
                 if (foiRecebida) saldo += t.valor;
             }
@@ -176,13 +201,21 @@
         return total;
     }
     function calcularReceitasMes() {
-        return transacoes.filter(t => t.tipo === 'receita' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual && (t.recebido !== undefined ? t.recebido : true)).reduce((s, t) => s + t.valor, 0);
+        return transacoes.filter(t => {
+            if (t.tipo !== 'receita') return false;
+            const d = new Date(t.data + 'T00:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && (t.recebido !== undefined ? t.recebido : true);
+        }).reduce((s, t) => s + t.valor, 0);
     }
     function calcularDespesasMes() {
-        return transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual).reduce((s, t) => s + t.valor, 0);
+        return transacoes.filter(t => {
+            if (t.tipo !== 'despesa') return false;
+            const d = new Date(t.data + 'T00:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+        }).reduce((s, t) => s + t.valor, 0);
     }
 
-    // ---------- RENDER (com atualização dos chips) ----------
+    // ---------- RENDER ----------
     function atualizarCabecalhoMes() {
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         const titulo = `${meses[mesAtual]} ${anoAtual}`;
@@ -190,15 +223,10 @@
         if (mesTransacoesTituloNovo) mesTransacoesTituloNovo.textContent = titulo;
         atualizarChipAtivo();
     }
-
     function atualizarChipAtivo() {
         mesChips.forEach(chip => {
             const mesChip = parseInt(chip.dataset.mes);
-            if (mesChip === mesAtual) {
-                chip.classList.add('ativo');
-            } else {
-                chip.classList.remove('ativo');
-            }
+            chip.classList.toggle('ativo', mesChip === mesAtual);
         });
     }
 
@@ -238,9 +266,23 @@
                 cartoes.forEach(cartao => {
                     const fatura = calcularFaturaAtual(cartao.id);
                     const disponivel = cartao.limite - fatura;
+                    const percentual = cartao.limite > 0 ? (fatura / cartao.limite) * 100 : 0;
+                    const melhorDia = cartao.diaFechamento + 1 > 31 ? 1 : cartao.diaFechamento + 1;
                     const div = document.createElement('div');
                     div.className = 'cartao-resumo-item';
-                    div.innerHTML = `<div class="cartao-resumo-header"><strong>${cartao.nome}</strong><span>${formatarMoeda(fatura)}</span></div><div style="font-size:14px; color:#6b7280;">Limite: ${formatarMoeda(cartao.limite)} | Disponível: ${formatarMoeda(disponivel)}</div><div style="font-size:12px; color:#9ca3af; margin-top:6px;">Fecha dia ${cartao.diaFechamento} | Vence dia ${cartao.diaVencimento}</div>`;
+                    div.innerHTML = `
+                        <div class="cartao-resumo-header"><strong>${cartao.nome}</strong><span>${formatarMoeda(fatura)}</span></div>
+                        <div class="limite-barra-container">
+                            <div class="limite-barra">
+                                <div class="limite-barra-preenchida" style="width: ${percentual}%;"></div>
+                            </div>
+                        </div>
+                        <div style="font-size:14px; color:#6b7280;">Limite: ${formatarMoeda(cartao.limite)} | Disponível: ${formatarMoeda(disponivel)}</div>
+                        <div class="cartao-datas">
+                            <span>📅 Vence dia ${cartao.diaVencimento}</span>
+                            <span class="melhor-dia-compra">✨ Melhor dia: ${melhorDia}</span>
+                        </div>
+                    `;
                     cartoesResumoContainer.appendChild(div);
                 });
             }
@@ -276,12 +318,10 @@
         const container = getEl('grupos-transacoes');
         const emptyState = getEl('empty-transacoes');
         if (!container) return;
-        
         const transacoesMes = transacoes.filter(t => {
             const d = new Date(t.data + 'T00:00:00');
             return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
         }).sort((a, b) => new Date(b.data) - new Date(a.data));
-
         if (transacoesMes.length === 0) {
             container.innerHTML = '';
             if (emptyState) emptyState.style.display = 'block';
@@ -322,15 +362,36 @@
         });
     }
 
+    function renderizarChipsCategorias() {
+        if (!categoriasChipsContainer) return;
+        categoriasChipsContainer.innerHTML = '';
+        categorias.forEach(cat => {
+            const chip = document.createElement('span');
+            chip.className = `categoria-chip ${categoriaSelecionada === cat.nome ? 'ativo' : ''}`;
+            chip.innerHTML = `${cat.icone} ${cat.nome}`;
+            chip.dataset.categoria = cat.nome;
+            chip.addEventListener('click', () => {
+                categoriaSelecionada = cat.nome;
+                renderizarChipsCategorias();
+            });
+            categoriasChipsContainer.appendChild(chip);
+        });
+    }
+
     function abrirModalTransacao() {
         atualizarSelectModal();
         const hoje = new Date();
-        if (modalData) modalData.value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
-        if (modalValor) modalValor.value = '';
-        if (modalDescricao) modalDescricao.value = '';
-        if (modalCategoria) modalCategoria.value = '';
-        if (checkboxRecebido) checkboxRecebido.checked = true;
-        if (modalTransacao) modalTransacao.style.display = 'flex';
+        modalData.value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+        modalValor.value = '';
+        modalDescricao.value = '';
+        modalObservacao.value = '';
+        modalTags.value = '';
+        checkboxRecebido.checked = true;
+        checkboxReceitaFixa.checked = false;
+        repetirContainer.style.display = 'none';
+        categoriaSelecionada = 'Alimentação';
+        renderizarChipsCategorias();
+        modalTransacao.style.display = 'flex';
     }
 
     function mostrarTela(id) {
@@ -362,7 +423,7 @@
 
     // ---------- BACKUP ----------
     function exportarBackup() {
-        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes };
+        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, categorias };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -386,7 +447,8 @@
                 if (confirm('Importar backup substituirá todos os dados atuais. Continuar?')) {
                     contas = backup.contas;
                     transacoes = backup.transacoes;
-                    salvarContas(); salvarTransacoes();
+                    if (backup.categorias) categorias = backup.categorias;
+                    salvarContas(); salvarTransacoes(); salvarCategorias();
                     location.reload();
                 }
             } catch (error) { alert('❌ Arquivo de backup inválido.'); }
@@ -404,13 +466,9 @@
         renderizarDashboard();
         renderizarTransacoesAgrupadas();
 
-        // Exibir versão no item "Sobre"
         const itemSobre = getEl('item-sobre');
-        if (itemSobre) {
-            itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
-        }
+        if (itemSobre) itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
 
-        // Evento do botão "+" na tela principal
         if (btnAdicionarContaPrincipal) {
             btnAdicionarContaPrincipal.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -424,7 +482,6 @@
             });
         }
 
-        // Navegação dos meses (novos botões e chips)
         const navegarMes = (delta) => {
             mesAtual += delta;
             if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
@@ -432,36 +489,33 @@
             atualizarCabecalhoMes();
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
+            if (mesesDropdown) mesesDropdown.classList.remove('ativo');
+            if (btnToggleMeses) btnToggleMeses.classList.remove('aberto');
         };
 
-        if (btnMesAnteriorNovo) btnMesAnteriorNovo.addEventListener('click', () => navegarMes(-1));
-        if (btnMesProximoNovo) btnMesProximoNovo.addEventListener('click', () => navegarMes(1));
-        if (btnMesTransacoesAnteriorNovo) btnMesTransacoesAnteriorNovo.addEventListener('click', () => navegarMes(-1));
-        if (btnMesTransacoesProximoNovo) btnMesTransacoesProximoNovo.addEventListener('click', () => navegarMes(1));
+        btnToggleMeses.addEventListener('click', () => {
+            mesesDropdown.classList.toggle('ativo');
+            btnToggleMeses.classList.toggle('aberto');
+        });
 
         mesChips.forEach(chip => {
             chip.addEventListener('click', () => {
-                const mesChip = parseInt(chip.dataset.mes);
-                mesAtual = mesChip;
+                mesAtual = parseInt(chip.dataset.mes);
                 atualizarCabecalhoMes();
                 renderizarDashboard();
                 renderizarTransacoesAgrupadas();
+                mesesDropdown.classList.remove('ativo');
+                btnToggleMeses.classList.remove('aberto');
             });
         });
 
-        // Modal de transação: abrir sem trocar de aba
-        fab.addEventListener('click', () => {
-            abrirModalTransacao();
-        });
+        fab.addEventListener('click', () => abrirModalTransacao());
 
-        // Botões de tipo (Receita/Despesa)
         tipoReceitaBtn.addEventListener('click', () => {
             tipoTransacaoAtual = 'receita';
             modalTitulo.textContent = 'Nova receita';
             tipoReceitaBtn.style.background = '#10b981';
             tipoDespesaBtn.style.background = '#9ca3af';
-            tipoReceitaBtn.classList.add('ativo');
-            tipoDespesaBtn.classList.remove('ativo');
             if (checkboxRecebido) checkboxRecebido.closest('label').style.display = 'flex';
         });
         tipoDespesaBtn.addEventListener('click', () => {
@@ -469,33 +523,25 @@
             modalTitulo.textContent = 'Nova despesa';
             tipoDespesaBtn.style.background = '#dc2626';
             tipoReceitaBtn.style.background = '#9ca3af';
-            tipoDespesaBtn.classList.add('ativo');
-            tipoReceitaBtn.classList.remove('ativo');
             if (checkboxRecebido) checkboxRecebido.closest('label').style.display = 'none';
         });
 
-        fecharModalTransacao.addEventListener('click', () => modalTransacao.style.display = 'none');
+        checkboxReceitaFixa.addEventListener('change', () => {
+            repetirContainer.style.display = checkboxReceitaFixa.checked ? 'block' : 'none';
+        });
 
-        salvarTransacaoModal.addEventListener('click', () => {
+        const salvarTransacao = (fecharModal = true) => {
             const contaId = modalConta?.value;
-            if (!contaId) { alert('Selecione uma conta.'); return; }
+            if (!contaId) { alert('Selecione uma conta.'); return false; }
             const valor = converterMoedaParaFloat(modalValor?.value);
-            if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return; }
+            if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return false; }
             const data = modalData?.value;
-            if (!data) { alert('Data inválida.'); return; }
+            if (!data) { alert('Data inválida.'); return false; }
             const descricao = modalDescricao?.value.trim() || (tipoTransacaoAtual === 'receita' ? 'Receita' : 'Despesa');
-            const categoria = modalCategoria?.value.trim() || 'Outros';
-
-            const hoje = new Date();
-            const dataTransacao = new Date(data + 'T00:00:00');
-            let recebido = true;
-            if (tipoTransacaoAtual === 'receita') {
-                recebido = checkboxRecebido?.checked ?? true;
-                // Se a data é futura e o usuário não desmarcou, sugerimos false por padrão?
-                // Mas respeitamos a escolha do usuário.
-            }
-
-            transacoes.push({
+            const categoria = categoriaSelecionada;
+            const recebido = tipoTransacaoAtual === 'receita' ? checkboxRecebido?.checked : true;
+            
+            const novaTransacao = {
                 id: gerarId(),
                 tipo: tipoTransacaoAtual,
                 valor,
@@ -504,15 +550,34 @@
                 data,
                 timestamp: new Date().toISOString(),
                 contaId,
-                recebido: recebido
-            });
+                recebido
+            };
+            if (modalObservacao?.value) novaTransacao.observacao = modalObservacao.value;
+            if (modalTags?.value) novaTransacao.tags = modalTags.value;
+            if (checkboxReceitaFixa?.checked) {
+                novaTransacao.receitaFixa = true;
+                novaTransacao.repetir = modalRepetir?.value || 'mensal';
+            }
+            if (modalLembrar?.checked) novaTransacao.lembrar = true;
+            
+            transacoes.push(novaTransacao);
             salvarTransacoes();
-            modalTransacao.style.display = 'none';
+            if (fecharModal) modalTransacao.style.display = 'none';
             renderizarDashboard();
             renderizarTransacoesAgrupadas();
+            return true;
+        };
+
+        salvarTransacaoModal.addEventListener('click', () => salvarTransacao(true));
+        salvarContinuarModal.addEventListener('click', () => {
+            if (salvarTransacao(false)) {
+                abrirModalTransacao();
+            }
         });
 
-        // ... (continua na Parte 2)
+        fecharModalTransacao.addEventListener('click', () => modalTransacao.style.display = 'none');
+
+        // ... continua na Parte 2 ...
         // Continuação do init()
 
         if (btnGerenciarContas) btnGerenciarContas.addEventListener('click', () => { renderizarListaContasModal(); if(modalOverlay) modalOverlay.style.display = 'flex'; });
@@ -613,6 +678,10 @@
 
         if (btnAbrirConfig) btnAbrirConfig.addEventListener('click', () => { if(telaConfiguracoes) telaConfiguracoes.style.display = 'block'; });
         if (btnVoltarConfig) btnVoltarConfig.addEventListener('click', () => { if(telaConfiguracoes) telaConfiguracoes.style.display = 'none'; });
+
+        // Áudio (placeholder)
+        const btnAudio = getEl('btn-gravar-audio');
+        if (btnAudio) btnAudio.addEventListener('click', () => alert('🎤 Gravação de áudio em breve!'));
     }
 
     if (document.readyState === 'loading') {
