@@ -714,3 +714,11 @@ body.dark-theme .orcamento-header { color: #e0e0e0; }
 @keyframes slideIn {
     to { opacity: 1; transform: translateX(0); }
 }
+* { box-sizing: border-box; margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+body { background: #f0fdf4; display: flex; justify-content: center; padding-bottom: 80px; }
+.app-container { max-width: 480px; width: 100%; margin: 0 auto; padding: 20px 16px 0; }
+.tela { display: none; }
+.tela.ativa { display: block; }
+
+/* ... (todo o CSS anterior que já tínhamos, mais os novos estilos de login, perfil, empréstimos) ... */
+/* Incluir os estilos de: .tela-login-overlay, .login-card, .perfil-card, .resumo-emprestimos, .emprestimo-item, etc. */
