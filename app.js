@@ -1,7 +1,7 @@
-
 (function(){
     "use strict";
-    console.log("🚀 App iniciado");
+    const APP_VERSION = '1.5.0'; // Versão do app
+    console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
 
     // ---------- ESTADO ----------
     let contas = [];
@@ -70,6 +70,9 @@
 
     const btnMesTransacoesAnteriorNovo = getEl('mes-transacoes-anterior-novo');
     const btnMesTransacoesProximoNovo = getEl('mes-transacoes-proximo-novo');
+
+    // Novo botão adicionar conta na tela principal
+    const btnAdicionarContaPrincipal = getEl('adicionar-conta-principal');
 
     // ---------- MÁSCARA ----------
     function aplicarMascaraMoeda(e) {
@@ -327,7 +330,7 @@
 
     // ---------- BACKUP ----------
     function exportarBackup() {
-        const backup = { versao: '1.0', data: new Date().toISOString(), contas, transacoes };
+        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -362,12 +365,35 @@
 
     // ---------- INIT ----------
     function init() {
-        console.log("🟢 init() executado");
+        console.log(`🟢 init() executado - v${APP_VERSION}`);
         carregarDados();
         configurarMascaras();
         atualizarCabecalhoMes();
         renderizarDashboard();
         renderizarTransacoesAgrupadas();
+
+        // Exibir versão no item "Sobre"
+        const itemSobre = getEl('item-sobre');
+        if (itemSobre) {
+            itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
+        }
+
+        // Evento do botão "+" na tela principal (adicionar conta)
+        if (btnAdicionarContaPrincipal) {
+            btnAdicionarContaPrincipal.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Pré-seleciona conta normal
+                document.querySelector('input[value="normal"]').checked = true;
+                if (camposContaNormal) camposContaNormal.style.display = 'block';
+                if (camposCartaoCredito) camposCartaoCredito.style.display = 'none';
+                // Limpa campos
+                if (novaContaNome) novaContaNome.value = '';
+                if (novaContaSaldoInicial) novaContaSaldoInicial.value = '0,00';
+                if (novaContaIncluirTotal) novaContaIncluirTotal.checked = true;
+                // Abre modal
+                if (modalOverlay) modalOverlay.style.display = 'flex';
+            });
+        }
 
         // Event listeners com verificação de existência
         const btnMesAnterior = getEl('mes-anterior');
@@ -513,6 +539,7 @@
                     case 'exportar-excel': if (typeof exportarParaCSV === 'function') exportarParaCSV(); else alert('Em breve'); break;
                     case 'backup-exportar': exportarBackup(); break;
                     case 'backup-importar': if(inputImportarBackup) inputImportarBackup.click(); break;
+                    case 'sobre': alert(`Meu Dinheiro v${APP_VERSION}\nMVP em desenvolvimento.`); break;
                     default: alert(`"${acao}" em breve!`);
                 }
             });
