@@ -25,7 +25,20 @@
             <button class="btn-dropdown-mes" id="btn-toggle-meses">▼</button>
         </div>
         <div class="meses-dropdown" id="meses-dropdown" style="display: none;">
-            <div class="meses-grid" id="meses-grid"></div>
+            <div class="meses-grid" id="meses-grid">
+                <button class="mes-chip" data-mes="0">JAN</button>
+                <button class="mes-chip" data-mes="1">FEV</button>
+                <button class="mes-chip" data-mes="2">MAR</button>
+                <button class="mes-chip" data-mes="3">ABR</button>
+                <button class="mes-chip" data-mes="4">MAI</button>
+                <button class="mes-chip" data-mes="5">JUN</button>
+                <button class="mes-chip" data-mes="6">JUL</button>
+                <button class="mes-chip" data-mes="7">AGO</button>
+                <button class="mes-chip" data-mes="8">SET</button>
+                <button class="mes-chip" data-mes="9">OUT</button>
+                <button class="mes-chip" data-mes="10">NOV</button>
+                <button class="mes-chip" data-mes="11">DEZ</button>
+            </div>
             <div class="meses-acoes">
                 <button class="btn-acao" id="btn-cancelar-mes">Cancelar</button>
                 <button class="btn-acao destaque" id="btn-mes-atual">Mês Atual</button>
@@ -177,6 +190,10 @@
 </nav>
 
 <button class="fab" id="fab-adicionar">+</button>
+
+<!-- INPUT OCULTO PARA IMPORTAR BACKUP -->
+<input type="file" id="input-importar-backup" accept=".json,application/json" style="display: none;">
+
 <!-- MODAL CONTAS -->
 <div class="modal-overlay" id="modal-contas">
     <div class="modal">
