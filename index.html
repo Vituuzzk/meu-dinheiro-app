@@ -10,9 +10,34 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase -->
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/auth.js"></script>
 </head>
 <body>
 <div class="app-container">
+    <!-- TELA DE LOGIN -->
+    <div id="tela-login" class="tela-login-overlay" style="display: flex;">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>💰 Meu Dinheiro</h1>
+                <p>Controle suas finanças de forma inteligente</p>
+            </div>
+            <div class="login-content">
+                <button id="btn-login-google" class="btn-login-google">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Entrar com Google
+                </button>
+                <p style="font-size: 12px; margin-top: 16px; color: #9ca3af;">Ao entrar, você concorda com nossos Termos de Uso.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- TELA PRINCIPAL -->
     <div id="tela-principal" class="tela ativa">
         <div class="cabecalho-ano">
@@ -21,7 +46,6 @@
             <button class="btn-ano-seta" id="mes-proximo-seta">→</button>
             <button class="btn-dropdown-mes" id="btn-toggle-meses">▼</button>
         </div>
-        <!-- Dropdown pop-up de meses -->
         <div class="meses-dropdown" id="meses-dropdown" style="display: none;">
             <div class="meses-grid" id="meses-grid">
                 <button class="mes-chip" data-mes="0">JAN</button>
@@ -50,7 +74,15 @@
                 <div class="resumo-item receita"><div class="label">Receitas</div><div class="valor" id="total-receitas-mes">R$ 0,00</div></div>
                 <div class="resumo-item despesa"><div class="label">Despesas</div><div class="valor" id="total-despesas-mes">R$ 0,00</div></div>
             </div>
+            <!-- Saldo Projetado -->
+            <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; opacity: 0.8;">📊 Saldo projetado (fim do mês)</span>
+                    <span style="font-weight: 700;" id="saldo-projetado-valor">R$ 0,00</span>
+                </div>
+            </div>
         </div>
+
         <div class="card">
             <div class="card-header">
                 <h3>Contas</h3>
@@ -62,17 +94,20 @@
             <div id="lista-contas-resumo"></div>
             <div id="total-contas-resumo" style="margin-top: 12px; font-weight: 700; text-align: right; border-top: 1px solid #d1fae5; padding-top: 12px;"></div>
         </div>
+
         <div class="card">
             <div class="card-header"><h3>Cartões de crédito</h3><a href="#" id="adicionar-cartao-link">+ Adicionar</a></div>
             <div id="cartoes-resumo-container"></div>
         </div>
+
         <div class="card">
             <div class="card-header"><h3>Despesas por categoria</h3></div>
             <div id="grafico-container">
                 <canvas id="grafico-categorias"></canvas>
-                <div id="empty-despesas" class="empty-state" style="display: none;"><p>📊 Opa! Você não tem despesas cadastradas esse mês.</p><p style="font-size:14px;">Adicione seus gastos no mês atual para ver seus gráficos.</p></div>
+                <div id="empty-despesas" class="empty-state" style="display: none;"><p>📊 Opa! Você não tem despesas cadastradas esse mês.</p></div>
             </div>
         </div>
+
         <div class="card placeholder-card">
             <div class="card-header"><h3>🐷 Seu Consultor Financeiro</h3><span class="badge-em-breve">Em breve</span></div>
             <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Um porquinho virtual que fica feliz ou triste conforme sua saúde financeira.</p></div>
@@ -88,25 +123,19 @@
         </div>
         <div class="card" style="padding: 0; overflow: hidden;">
             <div id="transacoes-agrupadas-container">
-                <div id="empty-transacoes" class="empty-state" style="padding: 32px 20px;"><p style="font-size: 18px; margin-bottom: 8px;">📭 Ops!</p><p>Você não possui transações registradas.</p><p style="font-size: 14px; margin-top: 16px;">Para criar um novo item, clique no botão (+)</p></div>
+                <div id="empty-transacoes" class="empty-state" style="padding: 32px 20px;"><p style="font-size: 18px; margin-bottom: 8px;">📭 Ops!</p><p>Você não possui transações registradas.</p></div>
                 <div id="grupos-transacoes"></div>
             </div>
-        </div>
-        <div class="card placeholder-card" style="margin-top: 16px;">
-            <div class="card-header"><h3>🏆 Ranking Anônimo</h3><span class="badge-em-breve">Em breve</span></div>
-            <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Compare sua taxa de economia com outros usuários de forma anônima.</p></div>
         </div>
     </div>
 
     <!-- TELA PLANEJAMENTO -->
     <div id="tela-planejamento" class="tela">
         <div class="cabecalho-mes"><h1>Planejamento</h1></div>
-        
         <div class="card">
             <h3>📊 Visão Geral</h3>
             <canvas id="grafico-planejamento"></canvas>
         </div>
-        
         <div class="card">
             <div class="card-header">
                 <h3>📋 Meus Orçamentos</h3>
@@ -115,60 +144,80 @@
             <div id="planejamento-container">
                 <div class="empty-state">
                     <p>📝 Nenhum orçamento definido para este mês.</p>
-                    <p style="font-size:14px; margin-top:8px;">Clique em "Definir" para começar.</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="card placeholder-card">
-            <div class="card-header"><h3>🎯 Desafios Semanais</h3><span class="badge-em-breve">Em breve</span></div>
-            <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Participe de desafios colaborativos e ganhe recompensas.</p></div>
+    <!-- TELA EMPRÉSTIMOS -->
+    <div id="tela-emprestimos" class="tela">
+        <div class="cabecalho-mes">
+            <h1>Empréstimos</h1>
+            <button id="btn-adicionar-emprestimo" style="width: auto; background: none; border: none; font-size: 24px; cursor: pointer;">＋</button>
+        </div>
+        <div class="card resumo-emprestimos">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>💰 Total emprestado</span>
+                <span style="font-weight: 700;" id="total-emprestado">R$ 0,00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>📥 Total a receber</span>
+                <span style="font-weight: 700;" id="total-a-receber">R$ 0,00</span>
+            </div>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div id="emprestimos-container">
+                <div id="empty-emprestimos" class="empty-state" style="padding: 32px 20px;">
+                    <p style="font-size: 18px; margin-bottom: 8px;">🤝 Nenhum empréstimo</p>
+                    <p>Empreste ou peça emprestado a um amigo.</p>
+                </div>
+                <div id="lista-emprestimos"></div>
+            </div>
         </div>
     </div>
 
-    <!-- TELA MAIS -->
+    <!-- TELA PERFIL (ANTIGA MAIS) -->
     <div id="tela-mais" class="tela">
         <div class="cabecalho-mes">
-            <h1>Mais opções</h1>
+            <h1>Perfil</h1>
             <button id="btn-abrir-configuracoes" style="width: auto; background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px; margin: 0; color: inherit;">⚙️</button>
         </div>
-        <div class="abas-container">
-            <button class="aba-btn ativo" data-aba="gerenciar">GERENCIAR</button>
-            <button class="aba-btn" data-aba="geral">GERAL</button>
-            <button class="aba-btn" data-aba="sobre">SOBRE</button>
+        <div class="card perfil-card">
+            <div class="perfil-header">
+                <div id="perfil-foto" class="perfil-foto">👤</div>
+                <div class="perfil-info">
+                    <h2 id="perfil-nome">Usuário</h2>
+                    <p id="perfil-email">carregando...</p>
+                </div>
+            </div>
+            <button id="btn-logout" class="btn-outline" style="margin-top: 20px; width: 100%;">Sair da Conta</button>
         </div>
-        <div id="aba-gerenciar" class="aba-conteudo ativo">
+        <div class="card premium-card">
+            <div class="card-header">
+                <h3>✨ Meu Dinheiro Premium</h3>
+                <span id="premium-badge" class="badge-em-breve">Grátis</span>
+            </div>
+            <p style="margin-bottom: 16px;">Desbloqueie orçamentos ilimitados, sincronização e muito mais.</p>
+            <button id="btn-assinar" class="btn-acao destaque" style="width: 100%;">Assinar Premium</button>
+        </div>
+        <div class="card">
             <div class="lista-opcoes">
                 <div class="opcao-item" data-acao="contas">🏦 Contas</div>
                 <div class="opcao-item" data-acao="cartoes">💳 Cartão de crédito</div>
-                <div class="opcao-item" data-acao="categorias">📂 Categorias</div>
-                <div class="opcao-item" data-acao="objetivos">🎯 Objetivos</div>
-                <div class="opcao-item" data-acao="importar">📥 Importar dados</div>
                 <div class="opcao-item" data-acao="exportar-excel">📊 Exportar relatório (Excel)</div>
                 <div class="opcao-item" data-acao="backup-exportar">💾 Exportar backup (JSON)</div>
                 <div class="opcao-item" data-acao="backup-importar">📂 Importar backup</div>
-                <div class="opcao-item" data-acao="lembrete">🔔 Lembrete diário</div>
             </div>
         </div>
-        <div id="aba-geral" class="aba-conteudo">
+        <div class="card" style="margin-top: 16px;">
             <div class="lista-opcoes">
-                <div class="opcao-item" data-acao="graficos">📈 Gráficos</div>
-                <div class="opcao-item" data-acao="desempenho">📊 Meu Desempenho</div>
-                <div class="opcao-item" data-acao="balanco">⚖️ Balanço mensal</div>
-                <div class="opcao-item" data-acao="calendario">📅 Calendário</div>
-            </div>
-        </div>
-        <div id="aba-sobre" class="aba-conteudo">
-            <div class="lista-opcoes">
-                <div class="opcao-item" data-acao="convidar">👥 Convide seus amigos</div>
-                <div class="opcao-item" data-acao="avaliar">⭐ Avaliar agora</div>
                 <div class="opcao-item" data-acao="termos">📄 Termos de Uso</div>
                 <div class="opcao-item" data-acao="ajuda">❓ Central de ajuda</div>
                 <div class="opcao-item" data-acao="sobre" id="item-sobre">ℹ️ Sobre</div>
             </div>
         </div>
         <div style="margin-top: 24px;">
-            <button id="btn-limpar-tudo" class="btn-perigo" style="background: #fee2e2; color: #dc2626;">🗑️ Limpar Todos os Dados</button>
+            <button id="btn-limpar-tudo" class="btn-perigo" style="background: #fee2e2; color: #dc2626;">🗑️ Limpar Meus Dados</button>
         </div>
     </div>
 
@@ -180,8 +229,8 @@
             <div style="width: 40px;"></div>
         </div>
         <div class="config-section">
-            <div class="config-item" onclick="alert('Em breve')"><span class="label">🌙 Tema</span><span class="valor" id="config-tema-valor">Claro</span></div>
-            <div class="config-item" onclick="alert('Em breve')"><span class="label">🔔 Notificações</span><span class="valor">Desativado</span></div>
+            <div class="config-item"><span class="label">🌙 Tema</span><span class="valor" id="config-tema-valor">Claro</span></div>
+            <div class="config-item"><span class="label">🔔 Notificações</span><span class="valor">Desativado</span></div>
         </div>
     </div>
 </div>
@@ -191,17 +240,19 @@
     <button class="menu-item ativo" data-tela="principal"><span>🏠</span>Principal</button>
     <button class="menu-item" data-tela="transacoes"><span>📋</span>Transações</button>
     <button class="menu-item" data-tela="planejamento"><span>📊</span>Planejamento</button>
-    <button class="menu-item" data-tela="mais"><span>⚙️</span>Mais</button>
+    <button class="menu-item" data-tela="emprestimos"><span>🤝</span>Empréstimos</button>
+    <button class="menu-item" data-tela="mais"><span>👤</span>Perfil</button>
 </nav>
 
 <button class="fab" id="fab-adicionar">+</button>
 
+<!-- MODAIS (CONTAS, TRANSAÇÃO, PLANEJAMENTO, EMPRÉSTIMO) -->
 <!-- MODAL CONTAS -->
 <div class="modal-overlay" id="modal-contas">
     <div class="modal">
         <h3>🏦 Gerenciar Contas</h3>
         <ul class="lista-contas" id="lista-contas-modal"></ul>
-        <hr style="margin: 16px 0;">
+        <hr>
         <h4>➕ Nova Conta</h4>
         <input type="text" id="nova-conta-nome" placeholder="Nome (ex: Nubank)">
         <div class="tipo-conta-selector">
@@ -210,7 +261,7 @@
         </div>
         <div id="campos-conta-normal">
             <input type="text" id="nova-conta-saldo-inicial" placeholder="Saldo inicial (R$)" class="moeda" value="0,00">
-            <label style="display: flex; align-items: center; gap: 8px; margin: 8px 0;"><input type="checkbox" id="nova-conta-incluir-total" checked> Incluir no Saldo Total</label>
+            <label><input type="checkbox" id="nova-conta-incluir-total" checked> Incluir no Saldo Total</label>
         </div>
         <div id="campos-cartao-credito" style="display: none;">
             <input type="text" id="cartao-limite" placeholder="Limite total (R$)" class="moeda" value="0,00">
@@ -218,72 +269,62 @@
             <input type="number" id="cartao-dia-vencimento" placeholder="Dia de vencimento" min="1" max="31" value="10">
         </div>
         <button id="btn-criar-conta">Criar Conta</button>
-        <button id="btn-fechar-modal" style="background:#9ca3af; margin-top:8px;">Fechar</button>
+        <button id="btn-fechar-modal" style="background:#9ca3af;">Fechar</button>
     </div>
 </div>
 
 <!-- MODAL TRANSAÇÃO -->
 <div class="modal-overlay" id="modal-transacao">
     <div class="modal" style="max-width: 420px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
             <h2 id="modal-titulo">Nova receita</h2>
-            <button id="fechar-modal-transacao" style="width: auto; background: none; border: none; font-size: 24px; cursor: pointer; padding: 0; margin: 0;">✕</button>
+            <button id="fechar-modal-transacao" style="width: auto;">✕</button>
         </div>
-        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-            <button id="tipo-receita-btn" class="tipo-transacao-btn ativo" style="flex: 1; background: #10b981;">📈 Receita</button>
-            <button id="tipo-despesa-btn" class="tipo-transacao-btn" style="flex: 1; background: #9ca3af;">📉 Despesa</button>
+        <div style="display: flex; gap: 12px; margin: 20px 0;">
+            <button id="tipo-receita-btn" class="tipo-transacao-btn ativo" style="background: #10b981;">📈 Receita</button>
+            <button id="tipo-despesa-btn" class="tipo-transacao-btn" style="background: #9ca3af;">📉 Despesa</button>
         </div>
-        <label style="font-size: 14px; color: #6b7280; margin-bottom: 4px; display: block;">Valor</label>
-        <div style="position: relative; display: flex; align-items: center;">
-            <span style="position: absolute; left: 16px; font-size: 28px; font-weight: 700; color: #1f2937; pointer-events: none;">R$</span>
-            <input type="text" id="modal-valor" placeholder="0,00" class="moeda" style="font-size: 28px; font-weight: 700; padding: 16px 16px 16px 56px; text-align: left;">
+        <label>Valor</label>
+        <div style="position: relative;">
+            <span style="position: absolute; left: 16px; top: 16px; font-size: 28px;">R$</span>
+            <input type="text" id="modal-valor" placeholder="0,00" class="moeda" style="padding-left: 56px; font-size: 28px;">
         </div>
-        <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Conta</label>
-        <select id="modal-conta" style="background: #f3f4f6; border: none;"><option value="">Selecione a conta...</option></select>
-        <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Data</label>
+        <label>Conta</label>
+        <select id="modal-conta"><option>Selecione a conta...</option></select>
+        <label>Data</label>
         <input type="date" id="modal-data">
-        
-        <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Descrição</label>
+        <label>Descrição</label>
         <div style="display: flex; gap: 8px;">
-            <input type="text" id="modal-descricao" placeholder="Ex: Compras do mês, Presente..." style="flex: 1;">
-            <button type="button" id="btn-gravar-audio" class="btn-audio" style="width: auto; margin: 8px 0;" title="Gravar áudio">🎤</button>
+            <input type="text" id="modal-descricao" placeholder="Ex: Compras do mês..." style="flex:1;">
+            <button type="button" id="btn-gravar-audio" class="btn-audio">🎤</button>
         </div>
-
-        <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Categoria</label>
+        <label>Categoria</label>
         <div class="categorias-chips-container" id="categorias-chips-container"></div>
-        <div style="margin-top: 8px;">
-            <a href="#" id="gerenciar-categorias-link" style="font-size: 13px; color: #2563eb;">+ Gerenciar categorias</a>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
-            <span style="font-size: 24px;">📎</span><span style="color: #2563eb; font-weight: 500;">Anexar comprovante</span><span style="margin-left: auto; color: #9ca3af; font-size: 12px;">Em breve</span>
-        </div>
-
-        <details style="margin-top: 16px;">
-            <summary style="color: #2563eb; font-weight: 500; cursor: pointer;">Mais detalhes</summary>
-            <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 16px;">
-                <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="modal-recebido" checked> Recebido</label>
-                <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px;"><input type="checkbox" id="modal-receita-fixa"> Receita fixa</label>
-                <div id="repetir-container" style="display: none; margin-top: 12px;">
+        <a href="#" id="gerenciar-categorias-link" style="font-size:13px;">+ Gerenciar categorias</a>
+        <div style="margin: 20px 0;"><span>📎</span> Anexar comprovante <span style="float:right;">Em breve</span></div>
+        <details>
+            <summary>Mais detalhes</summary>
+            <div style="margin-top:16px;">
+                <label><input type="checkbox" id="modal-recebido" checked> Recebido</label>
+                <label><input type="checkbox" id="modal-receita-fixa"> Receita fixa</label>
+                <div id="repetir-container" style="display:none;">
                     <label>Repetir</label>
                     <select id="modal-repetir">
                         <option value="nunca">Nunca</option>
                         <option value="semanal">Semanal</option>
                         <option value="mensal">Mensal</option>
-                        <option value="anual">Anual</option>
                     </select>
                 </div>
-                <label style="display: block; margin-top: 12px;">Observação</label>
+                <label>Observação</label>
                 <input type="text" id="modal-observacao" placeholder="Opcional">
-                <label style="display: block; margin-top: 12px;">Tags</label>
-                <input type="text" id="modal-tags" placeholder="Ex: urgente, família">
-                <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px;"><input type="checkbox" id="modal-lembrar"> Lembrar-me</label>
+                <label>Tags</label>
+                <input type="text" id="modal-tags" placeholder="Ex: urgente">
+                <label><input type="checkbox" id="modal-lembrar"> Lembrar-me</label>
             </div>
         </details>
-
         <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button id="salvar-transacao-modal" style="flex: 2; background: #059669;">Salvar</button>
-            <button id="salvar-continuar-modal" style="flex: 1; background: #2563eb;">Salvar e Continuar</button>
+            <button id="salvar-transacao-modal" style="background: #059669;">Salvar</button>
+            <button id="salvar-continuar-modal" style="background: #2563eb;">Salvar e Continuar</button>
         </div>
     </div>
 </div>
@@ -291,22 +332,43 @@
 <!-- MODAL PLANEJAMENTO -->
 <div class="modal-overlay" id="modal-planejamento">
     <div class="modal">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
             <h2>📊 Definir Orçamentos</h2>
-            <button id="fechar-modal-planejamento" style="width: auto; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+            <button id="fechar-modal-planejamento">✕</button>
         </div>
-        <p style="margin-bottom: 16px; color: #6b7280;">Defina limites de gastos para cada categoria.</p>
+        <p>Defina limites de gastos para cada categoria.</p>
         <div id="orcamentos-container"></div>
-        <button id="salvar-planejamento" style="margin-top: 16px; background: #059669;">Salvar Orçamentos</button>
+        <button id="salvar-planejamento" style="background: #059669;">Salvar Orçamentos</button>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="exportar.js"></script>
-<script src="js/modules/mascaras.js"></script>
-<script src="js/modules/backup.js"></script>
-<script src="js/modules/categorias.js"></script>
-<script src="js/modules/ui.js"></script>
-<script src="app.js"></script>
+<!-- MODAL EMPRÉSTIMO -->
+<div class="modal-overlay" id="modal-emprestimo">
+    <div class="modal">
+        <div style="display: flex; justify-content: space-between;">
+            <h2>💸 Novo Empréstimo</h2>
+            <button id="fechar-modal-emprestimo">✕</button>
+        </div>
+        <label>Contato</label>
+        <input type="text" id="emp-nome" placeholder="Nome da pessoa">
+        <label>Tipo</label>
+        <select id="emp-tipo">
+            <option value="emprestei">💰 Emprestei (a receber)</option>
+            <option value="peguei">📥 Peguei (a pagar)</option>
+        </select>
+        <label>Valor principal</label>
+        <input type="text" id="emp-valor" class="moeda" placeholder="R$ 0,00">
+        <label>Taxa de juros (% ao mês)</label>
+        <input type="number" id="emp-juros" placeholder="0" step="0.1" value="0">
+        <label>Número de parcelas</label>
+        <input type="number" id="emp-parcelas" placeholder="1" min="1" value="1">
+        <label>Data do primeiro vencimento</label>
+        <input type="date" id="emp-data">
+        <button id="salvar-emprestimo" style="background: #059669;">Criar Empréstimo</button>
+    </div>
+</div>
+
+<!-- Script principal -->
+<script type="module" src="app.js"></script>
 </body>
 </html>
