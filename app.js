@@ -6,7 +6,7 @@ import {
 
 (function(){
     "use strict";
-    const APP_VERSION = '3.0.2';
+    const APP_VERSION = '3.0.3';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION}`);
 
     // ---------- ESTADO ----------
@@ -223,7 +223,7 @@ import {
                 document.querySelector('input[value="credito"]').checked = true;
                 getEl('campos-conta-normal').style.display = 'none';
                 getEl('campos-cartao-credito').style.display = 'block';
-                getEl('modal-contas').style.display = 'flex';
+                abrirModal(getEl('modal-contas'));
             });
         } else {
             cartoes.forEach(cartao => {
@@ -368,13 +368,26 @@ import {
         if (getEl('tela-planejamento').classList.contains('ativa')) renderizarPlanejamento();
     }
 
+    // NOVA FUNÇÃO: Abrir modal com animação
+    function abrirModal(modalOverlay) {
+        modalOverlay.style.display = 'flex';
+        setTimeout(() => modalOverlay.classList.add('ativo'), 10);
+    }
+
+    // NOVA FUNÇÃO: Fechar modal com animação
+    function fecharModal(modalOverlay) {
+        modalOverlay.classList.remove('ativo');
+        setTimeout(() => modalOverlay.style.display = 'none', 300);
+    }
+
     // Continua na Parte 2...
+
     // ---------- LISTENERS ----------
     function configurarListeners() {
         // FAB
         getEl('fab-adicionar').addEventListener('click', () => {
-            getEl('modal-transacao').style.display = 'flex';
             getEl('modal-data').valueAsDate = new Date();
+            abrirModal(getEl('modal-transacao'));
             renderizarChipsCategorias();
         });
 
@@ -388,14 +401,15 @@ import {
 
         // Adicionar Empréstimo
         getEl('btn-adicionar-emprestimo').addEventListener('click', () => {
-            getEl('modal-emprestimo').style.display = 'flex';
             getEl('emp-data').valueAsDate = new Date();
+            abrirModal(getEl('modal-emprestimo'));
         });
 
-        // Fechar modais
+        // Fechar modais (usando os botões de fechar)
         document.querySelectorAll('[id^="fechar-modal"]').forEach(btn => {
             btn.addEventListener('click', () => {
-                btn.closest('.modal-overlay').style.display = 'none';
+                const modal = btn.closest('.modal-overlay');
+                fecharModal(modal);
             });
         });
 
@@ -421,7 +435,7 @@ import {
             salvarLocal();
             if (usandoFirebase) await salvarEmprestimoFirebase(novo);
             renderizarEmprestimos();
-            getEl('modal-emprestimo').style.display = 'none';
+            fecharModal(getEl('modal-emprestimo'));
         });
 
         // Adicionar Conta Principal
@@ -430,7 +444,7 @@ import {
             document.querySelector('input[value="normal"]').checked = true;
             getEl('campos-conta-normal').style.display = 'block';
             getEl('campos-cartao-credito').style.display = 'none';
-            getEl('modal-contas').style.display = 'flex';
+            abrirModal(getEl('modal-contas'));
         });
 
         // Salvar Conta
@@ -450,7 +464,7 @@ import {
             contas.push(nova);
             salvarLocal();
             if (usandoFirebase) await salvarContaFirebase(nova);
-            getEl('modal-contas').style.display = 'none';
+            fecharModal(getEl('modal-contas'));
             renderizarDashboard();
         });
 
@@ -469,7 +483,29 @@ import {
             transacoes.push(nova);
             salvarLocal();
             if (usandoFirebase) await salvarTransacaoFirebase(nova);
-            getEl('modal-transacao').style.display = 'none';
+            fecharModal(getEl('modal-transacao'));
+            atualizarTudo();
+        });
+
+        // Salvar e Continuar
+        getEl('salvar-continuar-modal').addEventListener('click', async () => {
+            // Salva sem fechar
+            const contaId = getEl('modal-conta').value;
+            if (!contaId) return alert('Selecione uma conta.');
+            const valor = converterMoedaParaFloat(getEl('modal-valor').value);
+            if (!valor) return alert('Valor inválido.');
+            const data = getEl('modal-data').value;
+            if (!data) return alert('Data inválida.');
+            const descricao = getEl('modal-descricao').value || (tipoTransacaoAtual === 'receita' ? 'Receita' : 'Despesa');
+            const categoria = categoriaSelecionada;
+            const recebido = tipoTransacaoAtual === 'receita' ? getEl('modal-recebido').checked : true;
+            const nova = { id: gerarId(), tipo: tipoTransacaoAtual, valor, categoria, descricao, data, recebido, contaId };
+            transacoes.push(nova);
+            salvarLocal();
+            if (usandoFirebase) await salvarTransacaoFirebase(nova);
+            // Limpa campos, mas mantém modal aberto
+            getEl('modal-valor').value = '';
+            getEl('modal-descricao').value = '';
             atualizarTudo();
         });
 
@@ -501,6 +537,22 @@ import {
             });
             lucide.createIcons();
         };
+
+        // Tipo de transação (Receita/Despesa)
+        getEl('tipo-receita-btn').addEventListener('click', () => {
+            tipoTransacaoAtual = 'receita';
+            getEl('modal-titulo').textContent = 'Nova receita';
+            getEl('tipo-receita-btn').classList.add('ativo');
+            getEl('tipo-despesa-btn').classList.remove('ativo');
+            getEl('modal-recebido').closest('label').style.display = 'flex';
+        });
+        getEl('tipo-despesa-btn').addEventListener('click', () => {
+            tipoTransacaoAtual = 'despesa';
+            getEl('modal-titulo').textContent = 'Nova despesa';
+            getEl('tipo-despesa-btn').classList.add('ativo');
+            getEl('tipo-receita-btn').classList.remove('ativo');
+            getEl('modal-recebido').closest('label').style.display = 'none';
+        });
     }
 
     // ---------- INICIALIZAÇÃO ----------
@@ -523,6 +575,7 @@ import {
                 getEl('btn-login-google').style.display = 'none';
                 getEl('btn-logout').style.display = 'block';
                 await carregarFirebase(user.uid);
+                alert("✅ Login realizado com sucesso!");
             } else {
                 getEl('perfil-nome').textContent = 'Usuário Local';
                 getEl('perfil-email').textContent = 'Modo offline';
@@ -534,7 +587,10 @@ import {
         });
 
         getEl('btn-login-google').addEventListener('click', loginComGoogle);
-        getEl('btn-logout').addEventListener('click', logout);
+        getEl('btn-logout').addEventListener('click', () => {
+            logout();
+            alert("👋 Logout realizado.");
+        });
 
         // Meses
         getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
