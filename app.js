@@ -1,55 +1,60 @@
-// app.js - Versão de Diagnóstico
+// app.js
+import { db, auth } from './js/firebase.js';
+import { loginComGoogle, logout, observarAuth } from './js/auth.js';
+
 (function(){
-    "use strict";
-    console.log("🟡 Modo Diagnóstico Ativado");
+    let currentUser = null;
+    let usandoFirebase = false; // controle local/remoto
+    // ... estado local (contas, transacoes, etc.)
 
-    const getEl = (id) => document.getElementById(id);
+    // Inicialização
+    async function init() {
+        carregarDadosLocais(); // sempre carrega do localStorage primeiro
+        configurarMascaras();
+        renderizarTudo();
 
-    function init() {
-        alert("✅ init() executado com sucesso!");
+        // Configura listeners de UI (botões, navegação)
+        configurarListeners();
 
-        // Testa os botões da tela principal
-        const verTodas = getEl('ver-todas-contas');
-        if (verTodas) {
-            verTodas.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert("👀 'Ver todas' clicado!");
-            });
-        } else {
-            alert("❌ ERRO: Botão 'ver-todas-contas' não encontrado!");
-        }
-
-        const adicionarConta = getEl('adicionar-conta-principal');
-        if (adicionarConta) {
-            adicionarConta.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert("➕ 'Adicionar conta' clicado!");
-            });
-        } else {
-            alert("❌ ERRO: Botão 'adicionar-conta-principal' não encontrado!");
-        }
-
-        // Testa o botão flutuante (FAB)
-        const fab = getEl('fab-adicionar');
-        if (fab) {
-            fab.addEventListener('click', () => {
-                alert("➕➕ FAB clicado!");
-            });
-        } else {
-            alert("❌ ERRO: FAB não encontrado!");
-        }
-
-        // Testa a navegação do menu inferior
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', () => {
-                alert(`📱 Menu: ${item.dataset.tela}`);
-            });
+        // Tenta conectar com Firebase se houver usuário logado
+        observarAuth(async (user) => {
+            if (user) {
+                currentUser = user;
+                usandoFirebase = true;
+                getEl('perfil-nome').textContent = user.displayName;
+                getEl('perfil-email').textContent = user.email;
+                getEl('btn-login-google').style.display = 'none';
+                getEl('btn-logout').style.display = 'block';
+                await carregarDadosFirebase(user.uid);
+            } else {
+                usandoFirebase = false;
+                getEl('perfil-nome').textContent = 'Usuário Local';
+                getEl('perfil-email').textContent = 'Modo offline';
+                getEl('btn-login-google').style.display = 'block';
+                getEl('btn-logout').style.display = 'none';
+            }
         });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    // Listeners
+    function configurarListeners() {
+        // Login
+        getEl('btn-login-google').addEventListener('click', loginComGoogle);
+        getEl('btn-logout').addEventListener('click', logout);
+        // Toggle empréstimos
+        getEl('toggle-emprestimos').addEventListener('click', () => {
+            const content = getEl('emprestimos-content');
+            const icon = getEl('emprestimo-toggle-icon');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        });
+        // ... demais listeners (adicionar conta, transação, empréstimo)
     }
+
+    init();
 })();
