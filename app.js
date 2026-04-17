@@ -1,3 +1,7 @@
+async function init() {
+    alert("🔥 init() executado!");
+    // ... resto do código
+}
 import { db, auth } from './js/firebase.js';
 import { loginComGoogle, logout, observarAuth } from './js/auth.js';
 
