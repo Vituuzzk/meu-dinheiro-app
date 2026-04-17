@@ -722,3 +722,26 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 
 /* ... (todo o CSS anterior que já tínhamos, mais os novos estilos de login, perfil, empréstimos) ... */
 /* Incluir os estilos de: .tela-login-overlay, .login-card, .perfil-card, .resumo-emprestimos, .emprestimo-item, etc. */
+/* Seção expansível de empréstimos */
+#toggle-emprestimos {
+    user-select: none;
+}
+#emprestimo-toggle-icon {
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+.resumo-emprestimos {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 16px;
+}
+body.dark-theme .resumo-emprestimos {
+    background: #1e1e1e;
+}
+.emprestimo-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+/* ... outros estilos já existentes ... */
