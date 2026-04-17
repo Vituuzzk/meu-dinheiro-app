@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>💰 Meu Dinheiro</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Ícones de Bancos Brasileiros -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/icones-bancos-brasileiros@1.0.0/dist/icones-bancos-brasileiros.min.css">
+    <!-- Ícones de Bancos Brasileiros - CDN Corrigido -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/matheusmcuba/icones-bancos-brasileiros@1.1/dist/all.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -179,7 +179,6 @@
 </nav>
 
 <button class="fab" id="fab-adicionar">+</button>
-
 <!-- MODAL CONTAS -->
 <div class="modal-overlay" id="modal-contas">
     <div class="modal">
@@ -244,8 +243,6 @@
         <button id="salvar-transacao-modal" style="margin-top: 24px; background: #059669; padding: 16px;">Salvar</button>
     </div>
 </div>
-
-<!-- ... todo o conteúdo anterior ... -->
 
 <!-- Scripts externos - ordem importa! -->
 <script src="exportar.js"></script>
