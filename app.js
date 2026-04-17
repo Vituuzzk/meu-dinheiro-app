@@ -24,6 +24,15 @@ import { loginComGoogle, logout, observarAuth } from './js/auth.js';
         // Listener do botão de login
         getEl('btn-login-google').addEventListener('click', loginComGoogle);
         getEl('btn-logout').addEventListener('click', logout);
+import { loginComGoogle, logout, observarAuth, handleRedirectResult } from './js/auth.js';
+
+// Dentro do init():
+async function init() {
+    // Captura o resultado do redirecionamento (se o usuário acabou de voltar do Google)
+    await handleRedirectResult();
+
+    // ... resto do código (observarAuth, etc.)
+}
         
         // Navegação...
     }
