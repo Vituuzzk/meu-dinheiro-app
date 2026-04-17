@@ -55,6 +55,21 @@ import { loginComGoogle, logout, observarAuth } from './js/auth.js';
         });
         // ... demais listeners (adicionar conta, transação, empréstimo)
     }
-
+function calcularParcelas(valor, jurosMensal, numParcelas, dataInicio) {
+    const valorComJuros = valor * (1 + jurosMensal / 100);
+    const valorParcela = valorComJuros / numParcelas;
+    const parcelas = [];
+    for (let i = 0; i < numParcelas; i++) {
+        const vencimento = new Date(dataInicio);
+        vencimento.setMonth(vencimento.getMonth() + i);
+        parcelas.push({
+            numero: i + 1,
+            valor: valorParcela,
+            vencimento: vencimento.toISOString().split('T')[0],
+            status: 'pendente'
+        });
+    }
+    return parcelas;
+}
     init();
 })();
