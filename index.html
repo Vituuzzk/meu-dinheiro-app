@@ -12,31 +12,22 @@
 <div class="app-container">
     <!-- TELA PRINCIPAL -->
     <div id="tela-principal" class="tela ativa">
-        <!-- Cabeçalho com título + dropdown + setas -->
-        <div class="cabecalho-mes-dropdown">
-            <div class="mes-titulo-container" id="mes-titulo-container">
-                <h1 id="mes-atual-titulo">Abril 2026</h1>
-                <button class="btn-dropdown-mes" id="btn-toggle-meses">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="mes-navegacao-setas">
-                <button class="btn-mes-seta" id="mes-anterior-seta">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-                <button class="btn-mes-seta" id="mes-proximo-seta">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </div>
+        <!-- Cabeçalho com ano e setas laterais -->
+        <div class="cabecalho-ano">
+            <button class="btn-ano-seta" id="ano-anterior">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h1 id="ano-atual-titulo">2026</h1>
+            <button class="btn-ano-seta" id="ano-proximo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
-        <!-- Dropdown de meses (grid 3x4) -->
-        <div class="meses-chips-dropdown" id="meses-chips-dropdown">
+        <!-- Grid de meses -->
+        <div class="meses-grid" id="meses-grid">
             <button class="mes-chip" data-mes="0">JAN</button>
             <button class="mes-chip" data-mes="1">FEV</button>
             <button class="mes-chip" data-mes="2">MAR</button>
@@ -49,6 +40,11 @@
             <button class="mes-chip" data-mes="9">OUT</button>
             <button class="mes-chip" data-mes="10">NOV</button>
             <button class="mes-chip" data-mes="11">DEZ</button>
+        </div>
+        <!-- Botões de ação -->
+        <div class="meses-acoes">
+            <button class="btn-acao" id="btn-cancelar-mes">Cancelar</button>
+            <button class="btn-acao destaque" id="btn-mes-atual">Mês Atual</button>
         </div>
 
         <div class="saldo-destaque">
@@ -91,10 +87,20 @@
         </div>
     </div>
 
-    <!-- TELA TRANSAÇÕES -->
+    <!-- TELA TRANSAÇÕES (apenas setas e título) -->
     <div id="tela-transacoes" class="tela">
-        <div class="cabecalho-mes-dropdown">
-            <h2 id="mes-transacoes-titulo-novo">Abril 2026</h2>
+        <div class="cabecalho-ano">
+            <button class="btn-ano-seta" id="mes-transacoes-anterior">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 id="mes-transacoes-titulo">Abril 2026</h2>
+            <button class="btn-ano-seta" id="mes-transacoes-proximo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
         <div class="card" style="padding: 0; overflow: hidden;">
             <div id="transacoes-agrupadas-container">
@@ -235,26 +241,22 @@
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Data</label>
         <input type="date" id="modal-data">
         
-        <!-- Descrição com áudio -->
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Descrição</label>
         <div style="display: flex; gap: 8px;">
             <input type="text" id="modal-descricao" placeholder="Ex: Salário, Mercado..." style="flex: 1;">
             <button type="button" id="btn-gravar-audio" class="btn-audio" style="width: auto; margin: 8px 0;" title="Gravar áudio">🎤</button>
         </div>
 
-        <!-- Categorias -->
         <label style="font-size: 14px; color: #6b7280; margin: 16px 0 4px; display: block;">Categoria</label>
         <div class="categorias-chips-container" id="categorias-chips-container"></div>
         <div style="margin-top: 8px;">
             <a href="#" id="gerenciar-categorias-link" style="font-size: 13px; color: #2563eb;">+ Gerenciar categorias</a>
         </div>
 
-        <!-- Anexar -->
         <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
             <span style="font-size: 24px;">📎</span><span style="color: #2563eb; font-weight: 500;">Anexar comprovante</span><span style="margin-left: auto; color: #9ca3af; font-size: 12px;">Em breve</span>
         </div>
 
-        <!-- Mais detalhes -->
         <details style="margin-top: 16px;">
             <summary style="color: #2563eb; font-weight: 500; cursor: pointer;">Mais detalhes</summary>
             <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 16px;">
