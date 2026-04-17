@@ -3,7 +3,10 @@
     "use strict";
 
     function aplicarMascaraMoeda(e) {
-        let v = e.target.value.replace(/[^\d,]/g, '');
+        let v = e.target.value;
+        // Remove tudo que não é dígito ou vírgula
+        v = v.replace(/[^\d,]/g, '');
+        // Garante apenas uma vírgula
         const partes = v.split(',');
         if (partes.length > 2) v = partes[0] + ',' + partes.slice(1).join('');
         e.target.value = v;
@@ -31,12 +34,13 @@
         document.querySelectorAll('.moeda').forEach(i => {
             i.addEventListener('input', aplicarMascaraMoeda);
             i.addEventListener('blur', (e) => {
-                if (e.target.value !== '') e.target.value = formatarMoedaInput(e.target.value);
+                if (e.target.value !== '') {
+                    e.target.value = formatarMoedaInput(e.target.value);
+                }
             });
         });
     }
 
-    // Exporta as funções para o objeto global (window)
     global.Mascaras = {
         aplicarMascaraMoeda,
         formatarMoedaInput,
