@@ -14,9 +14,9 @@
     <!-- TELA PRINCIPAL -->
     <div id="tela-principal" class="tela ativa">
         <div class="cabecalho-ano">
-            <button class="btn-ano-seta" id="ano-anterior">←</button>
+            <button class="btn-ano-seta" id="mes-anterior-seta">←</button>
             <h1 id="mes-atual-titulo">Abril</h1>
-            <button class="btn-ano-seta" id="ano-proximo">→</button>
+            <button class="btn-ano-seta" id="mes-proximo-seta">→</button>
             <button class="btn-dropdown-mes" id="btn-toggle-meses">▼</button>
         </div>
         <!-- Dropdown pop-up de meses -->
@@ -75,10 +75,6 @@
             <div class="card-header"><h3>🐷 Seu Consultor Financeiro</h3><span class="badge-em-breve">Em breve</span></div>
             <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Um porquinho virtual que fica feliz ou triste conforme sua saúde financeira.</p></div>
         </div>
-        <div class="card">
-            <div class="card-header"><h3>Planejamento mensal</h3></div>
-            <div class="empty-state"><p>📝 Ops! Você ainda não tem um planejamento definido para esse mês.</p><p style="font-size:14px; margin-bottom:16px;">Melhore seu controle financeiro agora!</p><button id="btn-definir-planejamento" class="btn-outline">DEFINIR MEU PLANEJAMENTO</button></div>
-        </div>
     </div>
 
     <!-- TELA TRANSAÇÕES -->
@@ -117,7 +113,6 @@
                 <a href="#" id="btn-definir-planejamento">Definir</a>
             </div>
             <div id="planejamento-container">
-                <!-- Será preenchido via JS -->
                 <div class="empty-state">
                     <p>📝 Nenhum orçamento definido para este mês.</p>
                     <p style="font-size:14px; margin-top:8px;">Clique em "Definir" para começar.</p>
@@ -125,7 +120,6 @@
             </div>
         </div>
 
-        <!-- Placeholder de Desafios -->
         <div class="card placeholder-card">
             <div class="card-header"><h3>🎯 Desafios Semanais</h3><span class="badge-em-breve">Em breve</span></div>
             <div class="placeholder-content"><p style="font-size: 14px; opacity: 0.7;">Participe de desafios colaborativos e ganhe recompensas.</p></div>
