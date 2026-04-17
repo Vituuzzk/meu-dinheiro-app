@@ -11,15 +11,38 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- TELA PRINCIPAL -->
+    <!-- TELA PRINCIPAL (com seletor de meses) -->
     <div id="tela-principal" class="tela ativa">
-        <div class="cabecalho-mes">
-            <h1 id="mes-atual-titulo">Abril</h1>
-            <div class="mes-navegacao">
-                <button id="mes-anterior">←</button>
-                <button id="mes-proximo">→</button>
-            </div>
+        <!-- Cabeçalho com título centralizado e setas discretas -->
+        <div class="mes-navegacao-novo">
+            <button class="btn-mes-navegacao" id="mes-anterior-novo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h1 id="mes-atual-titulo">Abril 2026</h1>
+            <button class="btn-mes-navegacao" id="mes-proximo-novo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
+        <!-- Chips dos meses -->
+        <div class="meses-chips-container">
+            <button class="mes-chip" data-mes="0">JAN</button>
+            <button class="mes-chip" data-mes="1">FEV</button>
+            <button class="mes-chip" data-mes="2">MAR</button>
+            <button class="mes-chip" data-mes="3">ABR</button>
+            <button class="mes-chip" data-mes="4">MAI</button>
+            <button class="mes-chip" data-mes="5">JUN</button>
+            <button class="mes-chip" data-mes="6">JUL</button>
+            <button class="mes-chip" data-mes="7">AGO</button>
+            <button class="mes-chip" data-mes="8">SET</button>
+            <button class="mes-chip" data-mes="9">OUT</button>
+            <button class="mes-chip" data-mes="10">NOV</button>
+            <button class="mes-chip" data-mes="11">DEZ</button>
+        </div>
+
         <div class="saldo-destaque">
             <div class="saldo-label">Saldo em contas</div>
             <div class="saldo-valor" id="saldo-total-valor">R$ 0,00</div>
@@ -33,7 +56,6 @@
                 <h3>Contas</h3>
                 <div style="display: flex; gap: 12px;">
                     <a href="#" id="ver-todas-contas">Ver todas</a>
-                    <!-- NOVO BOTÃO ADICIONAR CONTA -->
                     <a href="#" id="adicionar-conta-principal" style="font-size: 18px; font-weight: 700;">＋</a>
                 </div>
             </div>
@@ -147,7 +169,6 @@
                 <div class="opcao-item" data-acao="avaliar">⭐ Avaliar agora</div>
                 <div class="opcao-item" data-acao="termos">📄 Termos de Uso</div>
                 <div class="opcao-item" data-acao="ajuda">❓ Central de ajuda</div>
-                <!-- Item Sobre com versão do app será preenchida via JS -->
                 <div class="opcao-item" data-acao="sobre" id="item-sobre">ℹ️ Sobre</div>
             </div>
         </div>
@@ -211,7 +232,7 @@
     </div>
 </div>
 
-<!-- MODAL TRANSAÇÃO -->
+<!-- MODAL TRANSAÇÃO (com campo Recebido corrigido) -->
 <div class="modal-overlay" id="modal-transacao">
     <div class="modal" style="max-width: 420px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
