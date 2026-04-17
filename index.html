@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>💰 Meu Dinheiro</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dark-theme.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/matheusmcuba/icones-bancos-brasileiros@1.1/dist/all.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
@@ -12,7 +13,6 @@
 <div class="app-container">
     <!-- TELA PRINCIPAL -->
     <div id="tela-principal" class="tela ativa">
-        <!-- Cabeçalho com ano e setas laterais -->
         <div class="cabecalho-ano">
             <button class="btn-ano-seta" id="ano-anterior">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -26,7 +26,6 @@
                 </svg>
             </button>
         </div>
-        <!-- Grid de meses -->
         <div class="meses-grid" id="meses-grid">
             <button class="mes-chip" data-mes="0">JAN</button>
             <button class="mes-chip" data-mes="1">FEV</button>
@@ -41,7 +40,6 @@
             <button class="mes-chip" data-mes="10">NOV</button>
             <button class="mes-chip" data-mes="11">DEZ</button>
         </div>
-        <!-- Botões de ação -->
         <div class="meses-acoes">
             <button class="btn-acao" id="btn-cancelar-mes">Cancelar</button>
             <button class="btn-acao destaque" id="btn-mes-atual">Mês Atual</button>
@@ -87,7 +85,7 @@
         </div>
     </div>
 
-    <!-- TELA TRANSAÇÕES (apenas setas e título) -->
+    <!-- TELA TRANSAÇÕES -->
     <div id="tela-transacoes" class="tela">
         <div class="cabecalho-ano">
             <button class="btn-ano-seta" id="mes-transacoes-anterior">
@@ -194,6 +192,7 @@
 </nav>
 
 <button class="fab" id="fab-adicionar">+</button>
+
 <!-- MODAL CONTAS -->
 <div class="modal-overlay" id="modal-contas">
     <div class="modal">
@@ -220,7 +219,7 @@
     </div>
 </div>
 
-<!-- MODAL TRANSAÇÃO (com campo R$ corrigido) -->
+<!-- MODAL TRANSAÇÃO -->
 <div class="modal-overlay" id="modal-transacao">
     <div class="modal" style="max-width: 420px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -286,7 +285,9 @@
     </div>
 </div>
 
+<!-- Scripts externos -->
 <script src="exportar.js"></script>
+<script src="js/modules/mascaras.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
