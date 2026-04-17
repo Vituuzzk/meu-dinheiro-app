@@ -1,17 +1,14 @@
 (function(){
     "use strict";
-    const APP_VERSION = '2.4.0';
-    console.log(`🚀 Meu Dinheiro v${APP_VERSION} iniciado`);
+    const APP_VERSION = '2.4.1';
+    console.log(`🚀 Meu Dinheiro v${APP_VERSION} - Victor Rodrigues`);
 
     // ---------- ESTADO ----------
     let contas = [];
     let transacoes = [];
     let mesAtual = new Date().getMonth();
     let anoAtual = new Date().getFullYear();
-    
-    // Planejamento
-    let orcamentos = {}; // { categoria: valorLimite }
-
+    let orcamentos = {};
     let categorias = [
         { nome: 'Alimentação', icone: '🍔', cor: '#f97316' },
         { nome: 'Transporte', icone: '🚗', cor: '#3b82f6' },
@@ -80,7 +77,6 @@
     const btnCriarConta = getEl('btn-criar-conta');
     const btnLimparTudo = getEl('btn-limpar-tudo');
 
-    // Planejamento
     const containerPlanejamento = getEl('planejamento-container');
     const btnDefinirPlanejamento = getEl('btn-definir-planejamento');
     const modalPlanejamento = getEl('modal-planejamento');
@@ -104,8 +100,8 @@
     const telaConfiguracoes = getEl('tela-configuracoes');
     const btnVoltarConfig = getEl('btn-voltar-configuracoes');
 
-    const btnAnoAnterior = getEl('ano-anterior');
-    const btnAnoProximo = getEl('ano-proximo');
+    const btnMesAnteriorSeta = getEl('mes-anterior-seta');
+    const btnMesProximoSeta = getEl('mes-proximo-seta');
     const btnToggleMeses = getEl('btn-toggle-meses');
     const mesesDropdown = getEl('meses-dropdown');
     const mesChips = document.querySelectorAll('.mes-chip');
@@ -189,10 +185,15 @@
     function salvarCategorias() { localStorage.setItem('categorias', JSON.stringify(categorias)); }
     function salvarOrcamentos() { localStorage.setItem('orcamentos', JSON.stringify(orcamentos)); }
 
-    // ---------- CÁLCULOS ----------
+    // ---------- CÁLCULOS (com filtro por data) ----------
     function getDataLimite() { return new Date(anoAtual, mesAtual + 1, 0); }
     function calcularFaturaAtual(cartaoId) {
-        return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
+        const dataLimite = getDataLimite();
+        return transacoes.filter(t => {
+            if (t.tipo !== 'despesa' || t.contaId !== cartaoId) return false;
+            const d = new Date(t.data + 'T00:00:00');
+            return d <= dataLimite;
+        }).reduce((s, t) => s + t.valor, 0);
     }
     function calcularSaldoConta(contaId) {
         const conta = contas.find(c => c.id === contaId);
@@ -403,7 +404,6 @@
         });
         containerPlanejamento.innerHTML = html;
 
-        // Gráfico de planejamento
         if (ctxPlanejamento) {
             const labels = categoriasPlanejadas.map(c => c.nome);
             const dataGastos = categoriasPlanejadas.map(c => gastos[c.nome] || 0);
@@ -441,9 +441,8 @@
         modalPlanejamento.style.display = 'flex';
     }
 
-    // Continua na Parte 2...
+    // ... Continua na Parte 2 ...
     // ---------- CONTINUAÇÃO ----------
-
     function atualizarSelectModal() {
         if (!modalConta) return;
         modalConta.innerHTML = '<option value="">Selecione a conta...</option>';
@@ -564,7 +563,7 @@
         renderizarTransacoesAgrupadas();
 
         const itemSobre = getEl('item-sobre');
-        if (itemSobre) itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
+        if (itemSobre) itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION} - Victor Rodrigues)`;
 
         if (btnAdicionarContaPrincipal) {
             btnAdicionarContaPrincipal.addEventListener('click', (e) => {
@@ -587,18 +586,15 @@
             if (btnToggleMeses) btnToggleMeses.classList.remove('aberto');
         };
 
-        btnAnoAnterior.addEventListener('click', () => {
-            anoAnteriorSelecao = anoAtual;
-            mesAnteriorSelecao = mesAtual;
-            anoAtual--;
+        const navegarMes = (delta) => {
+            mesAtual += delta;
+            if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
+            else if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
             aplicarMesAno();
-        });
-        btnAnoProximo.addEventListener('click', () => {
-            anoAnteriorSelecao = anoAtual;
-            mesAnteriorSelecao = mesAtual;
-            anoAtual++;
-            aplicarMesAno();
-        });
+        };
+
+        if (btnMesAnteriorSeta) btnMesAnteriorSeta.addEventListener('click', () => navegarMes(-1));
+        if (btnMesProximoSeta) btnMesProximoSeta.addEventListener('click', () => navegarMes(1));
 
         btnToggleMeses.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -638,14 +634,8 @@
             aplicarMesAno();
         });
 
-        btnMesTransacoesAnterior.addEventListener('click', () => {
-            if (mesAtual === 0) { mesAtual = 11; anoAtual--; } else mesAtual--;
-            aplicarMesAno();
-        });
-        btnMesTransacoesProximo.addEventListener('click', () => {
-            if (mesAtual === 11) { mesAtual = 0; anoAtual++; } else mesAtual++;
-            aplicarMesAno();
-        });
+        btnMesTransacoesAnterior.addEventListener('click', () => navegarMes(-1));
+        btnMesTransacoesProximo.addEventListener('click', () => navegarMes(1));
 
         fab.addEventListener('click', () => abrirModalTransacao());
 
@@ -824,7 +814,7 @@
                     case 'exportar-excel': if (typeof exportarParaCSV === 'function') exportarParaCSV(); else alert('Em breve'); break;
                     case 'backup-exportar': exportarBackup(); break;
                     case 'backup-importar': if(inputImportarBackup) inputImportarBackup.click(); break;
-                    case 'sobre': alert(`Meu Dinheiro v${APP_VERSION}\nMVP em desenvolvimento.`); break;
+                    case 'sobre': alert(`Meu Dinheiro v${APP_VERSION}\nDesenvolvido por Victor Rodrigues`); break;
                     default: alert(`"${acao}" em breve!`);
                 }
             });
