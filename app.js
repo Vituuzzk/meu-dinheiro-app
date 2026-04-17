@@ -10,15 +10,15 @@
     let anoAtual = new Date().getFullYear();
     let orcamentos = {};
     let categorias = [
-        { nome: 'Alimentação', icone: '🍔', cor: '#f97316' },
-        { nome: 'Transporte', icone: '🚗', cor: '#3b82f6' },
-        { nome: 'Lazer', icone: '🎉', cor: '#10b981' },
-        { nome: 'Contas', icone: '📄', cor: '#8b5cf6' },
-        { nome: 'Salário', icone: '💼', cor: '#ec4899' },
-        { nome: 'Freelance', icone: '💻', cor: '#94a3b8' },
-        { nome: 'Saúde', icone: '🏥', cor: '#ef4444' },
-        { nome: 'Educação', icone: '📚', cor: '#14b8a6' }
-    ];
+    { nome: 'Alimentação', icone: 'utensils', cor: '#f97316' },
+    { nome: 'Transporte', icone: 'car', cor: '#3b82f6' },
+    { nome: 'Lazer', icone: 'popcorn', cor: '#10b981' },
+    { nome: 'Contas', icone: 'file-text', cor: '#8b5cf6' },
+    { nome: 'Salário', icone: 'briefcase', cor: '#ec4899' },
+    { nome: 'Freelance', icone: 'laptop', cor: '#94a3b8' },
+    { nome: 'Saúde', icone: 'heart-pulse', cor: '#ef4444' },
+    { nome: 'Educação', icone: 'book-open', cor: '#14b8a6' }
+];
 
     let chartInstance = null;
     let planejamentoChartInstance = null;
