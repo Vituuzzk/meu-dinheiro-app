@@ -4,16 +4,20 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .tela { display: none; }
 .tela.ativa { display: block; }
 
-/* Cabeçalho com dropdown de meses */
+/* Cabeçalho com dropdown de meses e setas */
 .cabecalho-mes-dropdown {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    justify-content: space-between;
     margin-bottom: 16px;
-    position: relative;
 }
-.cabecalho-mes-dropdown h1 {
+.mes-titulo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.mes-titulo-container h1 {
     font-size: 22px;
     font-weight: 700;
     color: #065f46;
@@ -24,7 +28,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     border: none;
     font-size: 20px;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px;
     color: #059669;
     width: auto;
     margin: 0;
@@ -33,29 +37,49 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .btn-dropdown-mes.aberto {
     transform: rotate(180deg);
 }
-.meses-chips-dropdown {
-    display: none;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px 0 16px;
-    margin-bottom: 8px;
-}
-.meses-chips-dropdown.ativo {
+.mes-navegacao-setas {
     display: flex;
+    gap: 4px;
 }
-.mes-chip {
-    flex: 0 0 auto;
-    padding: 8px 12px;
+.btn-mes-seta {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
     background: white;
     border: 1px solid #d1fae5;
-    border-radius: 24px;
-    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    color: #059669;
+}
+.meses-chips-dropdown {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #d1fae5;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.meses-chips-dropdown.ativo {
+    display: grid;
+}
+.mes-chip {
+    padding: 10px 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #065f46;
     cursor: pointer;
     transition: all 0.2s;
-    width: auto;
-    margin: 0;
+    text-align: center;
 }
 .mes-chip.ativo {
     background: #059669;
@@ -84,38 +108,14 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .conta-detalhes .subtitulo { font-size: 12px; color: #6b7280; }
 .conta-saldo { font-weight: 700; font-size: 18px; }
 
-/* Cartão de Crédito - Barra de limite */
+/* Cartão de Crédito */
 .cartao-resumo-item { background: #f8fafc; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
 .cartao-resumo-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.limite-barra-container {
-    margin: 8px 0;
-}
-.limite-barra {
-    width: 100%;
-    height: 8px;
-    background: #e0e7ff;
-    border-radius: 4px;
-    overflow: hidden;
-}
-.limite-barra-preenchida {
-    height: 100%;
-    background: #059669;
-    border-radius: 4px;
-}
-.cartao-datas {
-    font-size: 13px;
-    color: #6b7280;
-    margin-top: 8px;
-    display: flex;
-    justify-content: space-between;
-}
-.melhor-dia-compra {
-    background: #d1fae5;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-    color: #065f46;
-}
+.limite-barra-container { margin: 8px 0; }
+.limite-barra { width: 100%; height: 8px; background: #e0e7ff; border-radius: 4px; overflow: hidden; }
+.limite-barra-preenchida { height: 100%; background: #059669; border-radius: 4px; }
+.cartao-datas { font-size: 13px; color: #6b7280; margin-top: 8px; display: flex; justify-content: space-between; }
+.melhor-dia-compra { background: #d1fae5; padding: 4px 8px; border-radius: 12px; font-weight: 600; color: #065f46; }
 
 .empty-state { text-align: center; padding: 24px 16px; color: #6b7280; }
 .empty-state p { margin-bottom: 16px; }
@@ -147,7 +147,7 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .transacao-valor.receita { color: #10b981; }
 .transacao-valor.despesa { color: #dc2626; }
 
-/* Abas e Configurações (mantidos) */
+/* Abas e Configurações */
 .abas-container { display: flex; background: white; border-radius: 20px; padding: 6px; margin-bottom: 20px; border: 1px solid #d1fae5; }
 .aba-btn { flex: 1; padding: 12px 8px; background: transparent; border: none; border-radius: 16px; font-weight: 600; font-size: 14px; color: #6b7280; cursor: pointer; transition: 0.2s; margin: 0; }
 .aba-btn.ativo { background: #059669; color: white; }
@@ -167,31 +167,10 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .config-item .label { font-weight: 500; color: #1f2937; }
 .config-item .valor { color: #6b7280; }
 
-/* Tags de Categorias (Modal) */
-.categorias-chips-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 12px 0;
-}
-.categoria-chip {
-    padding: 8px 14px;
-    background: #f3f4f6;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-}
-.categoria-chip.ativo {
-    background: #059669;
-    color: white;
-}
-.categoria-chip:hover {
-    background: #e0e7ff;
-}
+/* Tags de Categorias */
+.categorias-chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.categoria-chip { padding: 8px 14px; background: #f3f4f6; border-radius: 20px; font-size: 14px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.categoria-chip.ativo { background: #059669; color: white; }
 
 /* Placeholder */
 .placeholder-card { opacity: 0.9; border: 1px dashed #a7f3d0; background: #f9fefb; }
@@ -199,10 +178,4 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .placeholder-content { padding: 12px 0 4px; }
 
 /* Botão de áudio */
-.btn-audio {
-    width: auto;
-    padding: 8px 12px;
-    margin-left: 8px;
-    background: #f3f4f6;
-    color: #374151;
-}
+.btn-audio { width: auto; padding: 8px 12px; margin-left: 8px; background: #f3f4f6; color: #374151; }
