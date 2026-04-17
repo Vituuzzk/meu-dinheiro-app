@@ -29,7 +29,14 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-header"><h3>Contas</h3><a href="#" id="ver-todas-contas">Ver todas</a></div>
+            <div class="card-header">
+                <h3>Contas</h3>
+                <div style="display: flex; gap: 12px;">
+                    <a href="#" id="ver-todas-contas">Ver todas</a>
+                    <!-- NOVO BOTÃO ADICIONAR CONTA -->
+                    <a href="#" id="adicionar-conta-principal" style="font-size: 18px; font-weight: 700;">＋</a>
+                </div>
+            </div>
             <div id="lista-contas-resumo"></div>
             <div id="total-contas-resumo" style="margin-top: 12px; font-weight: 700; text-align: right; border-top: 1px solid #d1fae5; padding-top: 12px;"></div>
         </div>
@@ -59,7 +66,6 @@
 
     <!-- TELA TRANSAÇÕES (SEM SALDO PRINCIPAL) -->
     <div id="tela-transacoes" class="tela">
-        <!-- Nova navegação de mês -->
         <div class="mes-navegacao-novo">
             <button class="btn-mes-navegacao" id="mes-transacoes-anterior-novo">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,7 +101,6 @@
         <div class="cabecalho-mes"><h1>Planejamento</h1></div>
         <div class="card"><h3>📊 Visão Geral</h3><canvas id="grafico-planejamento"></canvas></div>
         <div class="card"><div class="empty-state"><p>🚧 Em breve: orçamentos por categoria e metas de economia.</p></div></div>
-        <!-- PLACEHOLDER: DESAFIOS -->
         <div class="card placeholder-card">
             <div class="card-header"><h3>🎯 Desafios Semanais</h3><span class="badge-em-breve">Em breve</span></div>
             <div class="placeholder-content">
@@ -142,7 +147,8 @@
                 <div class="opcao-item" data-acao="avaliar">⭐ Avaliar agora</div>
                 <div class="opcao-item" data-acao="termos">📄 Termos de Uso</div>
                 <div class="opcao-item" data-acao="ajuda">❓ Central de ajuda</div>
-                <div class="opcao-item" data-acao="sobre">ℹ️ Sobre</div>
+                <!-- Item Sobre com versão do app será preenchida via JS -->
+                <div class="opcao-item" data-acao="sobre" id="item-sobre">ℹ️ Sobre</div>
             </div>
         </div>
         <div style="margin-top: 24px;">
@@ -244,7 +250,7 @@
     </div>
 </div>
 
-<!-- Scripts externos - ordem importa! -->
+<!-- Scripts externos -->
 <script src="exportar.js"></script>
 <script src="app.js"></script>
 </body>
