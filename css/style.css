@@ -4,17 +4,20 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .tela { display: none; }
 .tela.ativa { display: block; }
 
-/* Cabeçalho com ano e setas laterais */
+/* Cabeçalho com ano e dropdown */
 .cabecalho-ano {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 8px;
     margin-bottom: 16px;
+    position: relative;
 }
 .cabecalho-ano h1 {
     font-size: 28px;
     font-weight: 700;
     color: #065f46;
+    margin: 0;
 }
 .btn-ano-seta {
     width: 40px;
@@ -27,26 +30,57 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     justify-content: center;
     cursor: pointer;
     padding: 0;
-    margin: 0;
     color: #059669;
+    font-size: 20px;
+    font-weight: bold;
 }
-/* Grid de meses */
+.btn-dropdown-mes {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    color: #059669;
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+.btn-dropdown-mes.aberto {
+    transform: rotate(180deg);
+}
+
+/* Dropdown pop-up de meses */
+.meses-dropdown {
+    position: absolute;
+    top: 60px;
+    left: 16px;
+    right: 16px;
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border: 1px solid #d1fae5;
+    z-index: 200;
+}
 .meses-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin-bottom: 16px;
 }
 .mes-chip {
-    padding: 10px 4px;
-    background: white;
-    border: 1px solid #d1fae5;
+    padding: 12px 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: #065f46;
     cursor: pointer;
-    transition: all 0.2s;
     text-align: center;
 }
 .mes-chip.ativo {
@@ -54,11 +88,9 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     color: white;
     border-color: #059669;
 }
-/* Botões de ação */
 .meses-acoes {
     display: flex;
     gap: 12px;
-    margin-bottom: 20px;
 }
 .btn-acao {
     flex: 1;
@@ -76,6 +108,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     border-color: #059669;
 }
 
+/* Cards e saldos */
 .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 16px; border: 1px solid #d1fae5; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .card-header h3 { font-size: 16px; font-weight: 600; color: #374151; }
@@ -106,14 +139,18 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .cartao-datas { font-size: 13px; color: #6b7280; margin-top: 8px; display: flex; justify-content: space-between; }
 .melhor-dia-compra { background: #d1fae5; padding: 4px 8px; border-radius: 12px; font-weight: 600; color: #065f46; }
 
+/* Estados vazios */
 .empty-state { text-align: center; padding: 24px 16px; color: #6b7280; }
 .empty-state p { margin-bottom: 16px; }
 .btn-outline { background: transparent; border: 1.5px solid #2563eb; color: #2563eb; font-weight: 600; width: auto; padding: 12px 24px; margin: 0 auto; display: inline-block; }
-canvas { max-height: 180px; }
+
+/* Menu inferior */
 .menu-inferior { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: white; display: flex; justify-content: space-around; padding: 12px 16px 20px; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05); z-index: 100; }
 .menu-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: #9ca3af; cursor: pointer; background: none; border: none; padding: 8px 12px; border-radius: 16px; width: auto; margin: 0; }
 .menu-item.ativo { color: #2563eb; background: #eff6ff; }
 .menu-item span { font-size: 22px; }
+
+/* FAB e Modais */
 .fab { position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; border-radius: 28px; background: #2563eb; color: white; border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.4); font-size: 28px; cursor: pointer; z-index: 90; max-width: 56px; padding: 0; display: flex; align-items: center; justify-content: center; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
 .modal { background: white; border-radius: 24px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
@@ -125,6 +162,8 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .btn-perigo { background: #f3f4f6; color: #dc2626; }
 .tipo-transacao-btn { padding: 12px; border: none; border-radius: 16px; font-weight: 600; color: white; transition: 0.2s; margin: 0; }
 .tipo-transacao-btn.ativo { box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform: scale(1.02); }
+
+/* Transações */
 .grupo-transacoes { margin-bottom: 8px; }
 .grupo-data { padding: 12px 20px; background: #f9fafb; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
 .transacao-item { display: flex; align-items: center; padding: 16px 20px; background: white; border-bottom: 1px solid #f3f4f6; }
@@ -146,6 +185,8 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .opcao-item { padding: 18px 20px; border-bottom: 1px solid #f3f4f6; font-size: 16px; font-weight: 500; color: #1f2937; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 12px; }
 .opcao-item:last-child { border-bottom: none; }
 .opcao-item:hover { background: #f9fafb; }
+
+/* Tela Configurações */
 #tela-configuracoes { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f0fdf4; z-index: 500; overflow-y: auto; padding-bottom: 20px; display: none; }
 .cabecalho-config { display: flex; align-items: center; padding: 20px 16px; background: white; border-bottom: 1px solid #d1fae5; margin-bottom: 20px; }
 .cabecalho-config h2 { flex: 1; text-align: center; font-size: 20px; font-weight: 700; color: #065f46; margin: 0; }
@@ -156,12 +197,12 @@ button { background: #2563eb; color: white; font-weight: bold; border: none; mar
 .config-item .label { font-weight: 500; color: #1f2937; }
 .config-item .valor { color: #6b7280; }
 
-/* Tags de Categorias */
+/* Chips de categorias */
 .categorias-chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-.categoria-chip { padding: 8px 14px; background: #f3f4f6; border-radius: 20px; font-size: 14px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.categoria-chip { padding: 8px 14px; background: #f3f4f6; border-radius: 20px; font-size: 14px; font-weight: 500; color: #374151; cursor: pointer; border: 1px solid transparent; }
 .categoria-chip.ativo { background: #059669; color: white; }
 
-/* Placeholder */
+/* Placeholders */
 .placeholder-card { opacity: 0.9; border: 1px dashed #a7f3d0; background: #f9fefb; }
 .badge-em-breve { background: #e5e7eb; color: #6b7280; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 20px; text-transform: uppercase; }
 .placeholder-content { padding: 12px 0 4px; }
