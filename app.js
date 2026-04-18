@@ -659,6 +659,7 @@ import {
         renderizarTransacoesAgrupadas();
         renderizarEmprestimos();
         configurarListeners();
+      await handleRedirectResult();
 
         observarAuth(async (user) => {
             currentUser = user;
