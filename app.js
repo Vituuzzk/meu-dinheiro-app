@@ -540,25 +540,13 @@ import {
             atualizarTudo();
         });
 
-        // Salvar e Continuar
-        getEl('salvar-continuar-modal').addEventListener('click', async () => {
-            const contaId = getEl('modal-conta').value;
-            if (!contaId) return alert('Selecione uma conta.');
-            const valor = converterMoedaParaFloat(getEl('modal-valor').value);
-            if (!valor) return alert('Valor inválido.');
-            const data = getEl('modal-data').value;
-            if (!data) return alert('Data inválida.');
-            const descricao = getEl('modal-descricao').value || (tipoTransacaoAtual === 'receita' ? 'Receita' : 'Despesa');
-            const categoria = categoriaSelecionada;
-            const recebido = tipoTransacaoAtual === 'receita' ? getEl('modal-recebido').checked : true;
-            const nova = { id: gerarId(), tipo: tipoTransacaoAtual, valor, categoria, descricao, data, recebido, contaId };
-            transacoes.push(nova);
-            salvarLocal();
-            if (usandoFirebase) await salvarTransacaoFirebase(nova);
-            getEl('modal-valor').value = '';
-            getEl('modal-descricao').value = '';
-            atualizarTudo();
-        });
+        // Fechar modal de transação (botão Fechar)
+        const btnFecharTransacao = getEl('fechar-modal-transacao-btn');
+        if (btnFecharTransacao) {
+            btnFecharTransacao.addEventListener('click', () => {
+                fecharModal(getEl('modal-transacao'));
+            });
+        }
 
         // Navegação
         document.querySelectorAll('.menu-item').forEach(item => {
