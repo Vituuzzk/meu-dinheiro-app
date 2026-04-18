@@ -650,8 +650,12 @@ import {
         }
     }
 
-    // ---------- INICIALIZAÇÃO ----------
+       // ---------- INICIALIZAÇÃO ----------
     async function init() {
+        // 1. Captura o retorno do Google (se houve redirecionamento)
+        await handleRedirectResult();
+        
+        // 2. Carrega dados locais primeiro (modo offline)
         carregarLocal();
         configurarMascaras();
         atualizarCabecalho();
@@ -659,8 +663,8 @@ import {
         renderizarTransacoesAgrupadas();
         renderizarEmprestimos();
         configurarListeners();
-      await handleRedirectResult();
 
+        // 3. Observa mudanças na autenticação (login/logout)
         observarAuth(async (user) => {
             currentUser = user;
             usandoFirebase = !!user;
@@ -680,6 +684,14 @@ import {
             }
         });
 
+        getEl('btn-login-google').addEventListener('click', loginComGoogle);
+        getEl('btn-logout').addEventListener('click', () => logout());
+
+        getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
+        getEl('mes-proximo-seta').addEventListener('click', () => navegarMes(1));
+        getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
+        getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
+    }
         getEl('btn-login-google').addEventListener('click', loginComGoogle);
         getEl('btn-logout').addEventListener('click', () => logout());
 
