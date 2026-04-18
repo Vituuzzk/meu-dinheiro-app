@@ -1,12 +1,12 @@
 import { db, auth } from './js/firebase.js';
-import { loginComGoogle, logout, observarAuth } from './js/auth.js';
+import { loginComGoogle, logout, observarAuth, handleRedirectResult } from './js/auth.js';
 import { 
-  collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc 
+  collection, addDoc, getDocs, query, where, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 (function(){
     "use strict";
-    const APP_VERSION = '3.1.0';
+    const APP_VERSION = '3.1.1';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION}`);
 
     // ---------- ESTADO ----------
@@ -98,7 +98,7 @@ import {
                 if (data.orcamentos) orcamentos = data.orcamentos;
                 if (data.categorias) categorias = data.categorias;
             });
-        } catch(e) { alert("Erro Firebase: "+e.message); }
+        } catch(e) { console.warn("Firebase:", e); }
         atualizarTudo();
     }
 
@@ -118,8 +118,7 @@ import {
     // ---------- CÁLCULOS ----------
     function getDataLimite() { return new Date(anoAtual, mesAtual + 1, 0); }
     function calcularFaturaAtual(cartaoId) {
-        return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId)
-            .reduce((s, t) => s + t.valor, 0);
+        return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
     }
     function calcularSaldoConta(contaId) {
         const conta = contas.find(c => c.id === contaId);
@@ -378,7 +377,6 @@ import {
         modalOverlay.classList.remove('ativo');
         setTimeout(() => modalOverlay.style.display = 'none', 300);
     }
-
     // ---------- BACKUP E EXPORTAÇÃO ----------
     function exportarBackup() {
         const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, emprestimos, orcamentos, categorias };
@@ -409,9 +407,6 @@ import {
                     orcamentos = backup.orcamentos || {};
                     if (backup.categorias) categorias = backup.categorias;
                     salvarLocal();
-                    if (usandoFirebase) {
-                        // Sincronizar com Firebase (opcional)
-                    }
                     location.reload();
                 }
             } catch (error) { alert('❌ Arquivo de backup inválido.'); }
@@ -437,17 +432,14 @@ import {
         URL.revokeObjectURL(url);
     }
 
-    // Continua na Parte 2...
     // ---------- LISTENERS ----------
     function configurarListeners() {
-        // FAB
         getEl('fab-adicionar').addEventListener('click', () => {
             getEl('modal-data').valueAsDate = new Date();
             abrirModal(getEl('modal-transacao'));
             renderizarChipsCategorias();
         });
 
-        // Toggle Empréstimos
         getEl('toggle-emprestimos').addEventListener('click', () => {
             const content = getEl('emprestimos-content');
             const icon = getEl('emprestimo-toggle-icon');
@@ -455,18 +447,15 @@ import {
             icon.textContent = content.style.display === 'none' ? '▼' : '▲';
         });
 
-        // Adicionar Empréstimo
         getEl('btn-adicionar-emprestimo').addEventListener('click', () => {
             getEl('emp-data').valueAsDate = new Date();
             abrirModal(getEl('modal-emprestimo'));
         });
 
-        // Fechar modais
         document.querySelectorAll('[id^="fechar-modal"]').forEach(btn => {
             btn.addEventListener('click', () => fecharModal(btn.closest('.modal-overlay')));
         });
 
-        // Salvar Empréstimo
         getEl('salvar-emprestimo').addEventListener('click', async () => {
             const nome = getEl('emp-nome').value;
             const tipo = getEl('emp-tipo').value;
@@ -491,7 +480,6 @@ import {
             fecharModal(getEl('modal-emprestimo'));
         });
 
-        // Adicionar Conta Principal
         getEl('adicionar-conta-principal').addEventListener('click', (e) => {
             e.preventDefault();
             document.querySelector('input[value="normal"]').checked = true;
@@ -500,7 +488,6 @@ import {
             abrirModal(getEl('modal-contas'));
         });
 
-        // Salvar Conta
         getEl('btn-criar-conta').addEventListener('click', async () => {
             const nome = getEl('nova-conta-nome').value;
             if (!nome) return alert('Digite um nome.');
@@ -521,7 +508,6 @@ import {
             renderizarDashboard();
         });
 
-        // Salvar Transação
         getEl('salvar-transacao-modal').addEventListener('click', async () => {
             const contaId = getEl('modal-conta').value;
             if (!contaId) return alert('Selecione uma conta.');
@@ -540,15 +526,11 @@ import {
             atualizarTudo();
         });
 
-        // Fechar modal de transação (botão Fechar)
         const btnFecharTransacao = getEl('fechar-modal-transacao-btn');
         if (btnFecharTransacao) {
-            btnFecharTransacao.addEventListener('click', () => {
-                fecharModal(getEl('modal-transacao'));
-            });
+            btnFecharTransacao.addEventListener('click', () => fecharModal(getEl('modal-transacao')));
         }
 
-        // Navegação
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
                 const tela = item.dataset.tela;
@@ -560,7 +542,6 @@ import {
             });
         });
 
-        // Chips de categorias
         window.renderizarChipsCategorias = () => {
             const container = getEl('categorias-chips-container');
             container.innerHTML = '';
@@ -577,7 +558,6 @@ import {
             lucide.createIcons();
         };
 
-        // Tipo de transação
         getEl('tipo-receita-btn').addEventListener('click', () => {
             tipoTransacaoAtual = 'receita';
             getEl('modal-titulo').textContent = 'Nova receita';
@@ -593,7 +573,6 @@ import {
             getEl('modal-recebido').closest('label').style.display = 'none';
         });
 
-        // Dropdown de meses
         getEl('btn-toggle-meses').addEventListener('click', (e) => {
             e.stopPropagation();
             const dd = getEl('meses-dropdown');
@@ -625,79 +604,12 @@ import {
             getEl('meses-dropdown').style.display = 'none';
         });
 
-        // Limpar Dados
         getEl('btn-limpar-tudo').addEventListener('click', () => {
             if (confirm('Apagar TODOS os dados permanentemente?')) {
                 localStorage.clear();
-                if (usandoFirebase) {
-                    // Opcional: deletar documentos do Firebase (mais complexo)
-                }
                 location.reload();
             }
         });
 
-        // Backup / Exportar
-        getEl('btn-exportar-backup')?.addEventListener('click', exportarBackup);
-        getEl('btn-importar-backup')?.addEventListener('click', () => getEl('input-importar-backup').click());
-        getEl('input-importar-backup')?.addEventListener('change', importarBackup);
-        getEl('btn-exportar-excel')?.addEventListener('click', exportarParaCSV);
-
-        // Sobre
-        const itemSobre = getEl('item-sobre');
-        if (itemSobre) {
-            itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
-            itemSobre.addEventListener('click', () => alert(`💰 Meu Dinheiro v${APP_VERSION}\nDesenvolvido por Victor Rodrigues`));
-        }
-    }
-
-           // ---------- INICIALIZAÇÃO ----------
-    async function init() {
-        // 1. Captura o retorno do Google (se houve redirecionamento)
-        await handleRedirectResult();
-        
-        // 2. Carrega dados locais primeiro (modo offline)
-        carregarLocal();
-        configurarMascaras();
-        atualizarCabecalho();
-        renderizarDashboard();
-        renderizarTransacoesAgrupadas();
-        renderizarEmprestimos();
-        configurarListeners();
-
-        // 3. Observa mudanças na autenticação (login/logout)
-        observarAuth(async (user) => {
-            currentUser = user;
-            usandoFirebase = !!user;
-            if (user) {
-                getEl('perfil-nome').textContent = user.displayName || 'Usuário';
-                getEl('perfil-email').textContent = user.email;
-                getEl('btn-login-google').style.display = 'none';
-                getEl('btn-logout').style.display = 'block';
-                await carregarFirebase(user.uid);
-            } else {
-                getEl('perfil-nome').textContent = 'Usuário Local';
-                getEl('perfil-email').textContent = 'Modo offline';
-                getEl('btn-login-google').style.display = 'block';
-                getEl('btn-logout').style.display = 'none';
-                carregarLocal();
-                atualizarTudo();
-            }
-        });
-
-        getEl('btn-login-google').addEventListener('click', loginComGoogle);
-        getEl('btn-logout').addEventListener('click', () => logout());
-
-        getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
-        getEl('mes-proximo-seta').addEventListener('click', () => navegarMes(1));
-        getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
-        getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
-    }
-    function navegarMes(delta) {
-        mesAtual += delta;
-        if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
-        else if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
-        atualizarTudo();
-    }
-
-    init();
-})();
+        getEl('btn-exportar-backup')?.addEventListener('click
+    // Continua na Parte 2...
