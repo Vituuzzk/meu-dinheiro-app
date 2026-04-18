@@ -650,7 +650,7 @@ import {
         }
     }
 
-       // ---------- INICIALIZAÇÃO ----------
+           // ---------- INICIALIZAÇÃO ----------
     async function init() {
         // 1. Captura o retorno do Google (se houve redirecionamento)
         await handleRedirectResult();
@@ -692,15 +692,6 @@ import {
         getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
         getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
     }
-        getEl('btn-login-google').addEventListener('click', loginComGoogle);
-        getEl('btn-logout').addEventListener('click', () => logout());
-
-        getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
-        getEl('mes-proximo-seta').addEventListener('click', () => navegarMes(1));
-        getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
-        getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
-    }
-
     function navegarMes(delta) {
         mesAtual += delta;
         if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
