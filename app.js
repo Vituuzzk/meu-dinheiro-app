@@ -377,6 +377,8 @@ import {
         modalOverlay.classList.remove('ativo');
         setTimeout(() => modalOverlay.style.display = 'none', 300);
     }
+
+    // Continua na Parte 2...
     // ---------- BACKUP E EXPORTAÇÃO ----------
     function exportarBackup() {
         const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, emprestimos, orcamentos, categorias };
@@ -611,5 +613,64 @@ import {
             }
         });
 
-        getEl('btn-exportar-backup')?.addEventListener('click
-    // Continua na Parte 2...
+        getEl('btn-exportar-backup')?.addEventListener('click', exportarBackup);
+        getEl('btn-importar-backup')?.addEventListener('click', () => getEl('input-importar-backup').click());
+        getEl('input-importar-backup')?.addEventListener('change', importarBackup);
+        getEl('btn-exportar-excel')?.addEventListener('click', exportarParaCSV);
+
+        const itemSobre = getEl('item-sobre');
+        if (itemSobre) {
+            itemSobre.innerHTML = `ℹ️ Sobre (v${APP_VERSION})`;
+            itemSobre.addEventListener('click', () => alert(`💰 Meu Dinheiro v${APP_VERSION}\nDesenvolvido por Victor Rodrigues`));
+        }
+    }
+
+    // ---------- INICIALIZAÇÃO ----------
+    async function init() {
+        await handleRedirectResult();
+        
+        carregarLocal();
+        configurarMascaras();
+        atualizarCabecalho();
+        renderizarDashboard();
+        renderizarTransacoesAgrupadas();
+        renderizarEmprestimos();
+        configurarListeners();
+
+        observarAuth(async (user) => {
+            currentUser = user;
+            usandoFirebase = !!user;
+            if (user) {
+                getEl('perfil-nome').textContent = user.displayName || 'Usuário';
+                getEl('perfil-email').textContent = user.email;
+                getEl('btn-login-google').style.display = 'none';
+                getEl('btn-logout').style.display = 'block';
+                await carregarFirebase(user.uid);
+            } else {
+                getEl('perfil-nome').textContent = 'Usuário Local';
+                getEl('perfil-email').textContent = 'Modo offline';
+                getEl('btn-login-google').style.display = 'block';
+                getEl('btn-logout').style.display = 'none';
+                carregarLocal();
+                atualizarTudo();
+            }
+        });
+
+        getEl('btn-login-google').addEventListener('click', loginComGoogle);
+        getEl('btn-logout').addEventListener('click', () => logout());
+
+        getEl('mes-anterior-seta').addEventListener('click', () => navegarMes(-1));
+        getEl('mes-proximo-seta').addEventListener('click', () => navegarMes(1));
+        getEl('mes-transacoes-anterior').addEventListener('click', () => navegarMes(-1));
+        getEl('mes-transacoes-proximo').addEventListener('click', () => navegarMes(1));
+    }
+
+    function navegarMes(delta) {
+        mesAtual += delta;
+        if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
+        else if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
+        atualizarTudo();
+    }
+
+    init();
+})();
