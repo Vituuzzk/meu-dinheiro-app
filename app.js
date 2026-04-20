@@ -1,15 +1,16 @@
-import { db, auth } from './js/firebase.js';
-import { loginComGoogle, logout, observarAuth, handleRedirectResult } from './js/auth.js';
+// Ponto de entrada principal do Meu Dinheiro
+import { db, auth } from './services/firebase.js';
+import { loginComGoogle, logout, observarAuth, handleRedirectResult } from './services/auth.js';
 import { 
   collection, addDoc, getDocs, query, where, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 (function(){
     "use strict";
-    const APP_VERSION = '3.1.1';
+    const APP_VERSION = '3.2.0';
     console.log(`🚀 Meu Dinheiro v${APP_VERSION}`);
 
-    // ---------- ESTADO ----------
+    // Estado global
     let contas = [];
     let transacoes = [];
     let emprestimos = [];
@@ -28,39 +29,27 @@ import {
     let anoAtual = new Date().getFullYear();
     let categoriaSelecionada = 'Alimentação';
     let tipoTransacaoAtual = 'receita';
-    let chartInstance = null;
-    let planejamentoChartInstance = null;
     let currentUser = null;
     let usandoFirebase = false;
     let anoAnteriorSelecao = anoAtual;
     let mesAnteriorSelecao = mesAtual;
 
     const getEl = (id) => document.getElementById(id);
-    const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const converterMoedaParaFloat = (v) => {
-        if (!v) return 0;
-        return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
-    };
-    function gerarId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
+    const { formatarMoeda, converterMoedaParaFloat, configurarMascaras } = Mascaras;
+    const { abrirModal, fecharModal } = Modal;
+    const { renderizarIconeConta } = CardConta;
+    const { renderizarChipsCategorias } = ChipCategoria;
+    const { renderizarDashboard } = Principal;
+    const { renderizarTransacoesAgrupadas } = Transacoes;
+    const { renderizarPlanejamento } = Planejamento;
+    const { atualizarPerfilUI } = Perfil;
+    const { exportarBackup, importarBackup, exportarParaCSV } = Backup;
+    const { 
+        calcularSaldoTotal, calcularSaldoProjetado, calcularReceitasMes, 
+        calcularDespesasMes, calcularSaldoConta, calcularFaturaAtual, calcularGastosPorCategoria 
+    } = Calculos;
 
-    // Máscaras
-    function aplicarMascaraMoeda(e) {
-        let v = e.target.value.replace(/[^\d,]/g, '');
-        const partes = v.split(',');
-        if (partes.length > 2) v = partes[0] + ',' + partes.slice(1).join('');
-        e.target.value = v;
-    }
-    function configurarMascaras() {
-        document.querySelectorAll('.moeda').forEach(i => {
-            i.addEventListener('input', aplicarMascaraMoeda);
-            i.addEventListener('blur', (e) => {
-                if (e.target.value) {
-                    let numero = parseFloat(e.target.value.replace(',', '.'));
-                    if (!isNaN(numero)) e.target.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                }
-            });
-        });
-    }
+    function gerarId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
 
     // Persistência Local
     function carregarLocal() {
@@ -115,70 +104,6 @@ import {
         await addDoc(collection(db, 'emprestimos'), { ...emp, userId: currentUser.uid });
     }
 
-    // ---------- CÁLCULOS ----------
-    function getDataLimite() { return new Date(anoAtual, mesAtual + 1, 0); }
-    function calcularFaturaAtual(cartaoId) {
-        return transacoes.filter(t => t.tipo === 'despesa' && t.contaId === cartaoId).reduce((s, t) => s + t.valor, 0);
-    }
-    function calcularSaldoConta(contaId) {
-        const conta = contas.find(c => c.id === contaId);
-        if (!conta) return 0;
-        if (conta.tipo === 'credito') return -calcularFaturaAtual(contaId);
-        const dataLimite = getDataLimite();
-        let saldo = conta.saldoInicial || 0;
-        transacoes.forEach(t => {
-            const dataTransacao = new Date(t.data + 'T00:00:00');
-            if (dataTransacao > dataLimite) return;
-            if (t.contaId === contaId) {
-                if (t.tipo === 'despesa') saldo -= t.valor;
-                else if (t.tipo === 'receita' && t.recebido !== false) saldo += t.valor;
-            }
-        });
-        return saldo;
-    }
-    function calcularSaldoTotal() {
-        let total = 0;
-        contas.forEach(c => {
-            if (c.tipo === 'normal' && c.incluirNoTotal) total += calcularSaldoConta(c.id);
-            else if (c.tipo === 'credito') total -= calcularFaturaAtual(c.id);
-        });
-        return total;
-    }
-    function calcularSaldoProjetado() {
-        const hoje = new Date();
-        const fimDoMes = new Date(anoAtual, mesAtual + 1, 0);
-        let saldo = calcularSaldoTotal();
-        transacoes.forEach(t => {
-            const data = new Date(t.data + 'T00:00:00');
-            if (data > hoje && data <= fimDoMes) {
-                if (t.tipo === 'receita' && t.recebido === false) saldo += t.valor;
-                else if (t.tipo === 'despesa') saldo -= t.valor;
-            }
-        });
-        return saldo;
-    }
-    function calcularReceitasMes() {
-        return transacoes.filter(t => {
-            if (t.tipo !== 'receita') return false;
-            const d = new Date(t.data + 'T00:00:00');
-            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && t.recebido !== false;
-        }).reduce((s, t) => s + t.valor, 0);
-    }
-    function calcularDespesasMes() {
-        return transacoes.filter(t => {
-            if (t.tipo !== 'despesa') return false;
-            const d = new Date(t.data + 'T00:00:00');
-            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-        }).reduce((s, t) => s + t.valor, 0);
-    }
-    function calcularGastosPorCategoria() {
-        const gastos = {};
-        transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual)
-            .forEach(t => gastos[t.categoria] = (gastos[t.categoria] || 0) + t.valor);
-        return gastos;
-    }
-
-    // ---------- RENDERIZAÇÕES ----------
     function atualizarCabecalho() {
         const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
         getEl('mes-atual-titulo').textContent = meses[mesAtual];
@@ -188,258 +113,54 @@ import {
         });
     }
 
-    function renderizarIconeConta(nome) {
-        const n = nome.toLowerCase();
-        if (n.includes('nubank')) return '<i class="ibb-nubank" style="font-size:24px;"></i>';
-        if (n.includes('inter')) return '<i class="ibb-inter" style="font-size:24px;"></i>';
-        if (n.includes('carteira')) return '<span style="font-size:24px;">💰</span>';
-        return '<span style="font-size:24px;">🏦</span>';
-    }
-
-    function renderizarDashboard() {
-        getEl('saldo-total-valor').textContent = formatarMoeda(calcularSaldoTotal());
-        getEl('saldo-projetado-valor').textContent = formatarMoeda(calcularSaldoProjetado());
-        getEl('total-receitas-mes').textContent = formatarMoeda(calcularReceitasMes());
-        getEl('total-despesas-mes').textContent = formatarMoeda(calcularDespesasMes());
-
-        const contasNormais = contas.filter(c => c.tipo === 'normal');
-        const lista = getEl('lista-contas-resumo');
-        lista.innerHTML = '';
-        contasNormais.forEach(c => {
-            const saldo = calcularSaldoConta(c.id);
-            const div = document.createElement('div');
-            div.className = 'conta-item';
-            div.innerHTML = `<div class="conta-info"><div class="conta-icone">${renderizarIconeConta(c.nome)}</div><div class="conta-detalhes"><div class="nome">${c.nome}</div><div class="subtitulo">${c.incluirNoTotal ? 'Incluída' : 'Não incluída'}</div></div></div><div class="conta-saldo">${formatarMoeda(saldo)}</div>`;
-            lista.appendChild(div);
-        });
-        const totalNormal = contasNormais.reduce((s, c) => s + calcularSaldoConta(c.id), 0);
-        getEl('total-contas-resumo').innerHTML = `<span>Total</span> <span style="font-weight:700;">${formatarMoeda(totalNormal)}</span>`;
-
-        const cartoes = contas.filter(c => c.tipo === 'credito');
-        const cartoesContainer = getEl('cartoes-resumo-container');
-        cartoesContainer.innerHTML = '';
-        if (cartoes.length === 0) {
-            cartoesContainer.innerHTML = `<div class="empty-state"><p>💳 Nenhum cartão cadastrado.</p><button id="btn-adicionar-cartao-vazio" class="btn-outline">ADICIONAR</button></div>`;
-            getEl('btn-adicionar-cartao-vazio')?.addEventListener('click', () => {
-                document.querySelector('input[value="credito"]').checked = true;
-                getEl('campos-conta-normal').style.display = 'none';
-                getEl('campos-cartao-credito').style.display = 'block';
-                abrirModal(getEl('modal-contas'));
-            });
-        } else {
-            cartoes.forEach(cartao => {
-                const fatura = calcularFaturaAtual(cartao.id);
-                const disponivel = cartao.limite - fatura;
-                const percentual = cartao.limite > 0 ? (fatura / cartao.limite) * 100 : 0;
-                const melhorDia = cartao.diaFechamento + 1 > 31 ? 1 : cartao.diaFechamento + 1;
-                const div = document.createElement('div');
-                div.className = 'cartao-resumo-item';
-                div.innerHTML = `<div class="cartao-resumo-header"><strong>${cartao.nome}</strong><span>${formatarMoeda(fatura)}</span></div>
-                    <div class="limite-barra-container"><div class="limite-barra"><div class="limite-barra-preenchida" style="width: ${percentual}%;"></div></div></div>
-                    <div style="font-size:14px;">Limite: ${formatarMoeda(cartao.limite)} | Disponível: ${formatarMoeda(disponivel)}</div>
-                    <div class="cartao-datas"><span>📅 Vence dia ${cartao.diaVencimento}</span><span class="melhor-dia-compra">✨ Melhor dia: ${melhorDia}</span></div>`;
-                cartoesContainer.appendChild(div);
-            });
-        }
-
-        const despesasMes = transacoes.filter(t => t.tipo === 'despesa' && new Date(t.data).getMonth() === mesAtual && new Date(t.data).getFullYear() === anoAtual);
-        const canvas = getEl('grafico-categorias');
-        if (despesasMes.length === 0) {
-            canvas.style.display = 'none';
-            getEl('empty-despesas').style.display = 'block';
-        } else {
-            canvas.style.display = 'block';
-            getEl('empty-despesas').style.display = 'none';
-            const totais = {};
-            despesasMes.forEach(d => { totais[d.categoria] = (totais[d.categoria] || 0) + d.valor; });
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(totais),
-                    datasets: [{ data: Object.values(totais), backgroundColor: ['#f97316','#3b82f6','#10b981','#8b5cf6','#ec4899','#94a3b8'] }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-    }
-
-    function renderizarTransacoesAgrupadas() {
-        const container = getEl('grupos-transacoes');
-        const empty = getEl('empty-transacoes');
-        const transMes = transacoes.filter(t => {
-            const d = new Date(t.data + 'T00:00:00');
-            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-        }).sort((a,b) => new Date(b.data) - new Date(a.data));
-        if (transMes.length === 0) {
-            container.innerHTML = '';
-            empty.style.display = 'block';
-            return;
-        }
-        empty.style.display = 'none';
-        const grupos = {};
-        transMes.forEach(t => {
-            const data = new Date(t.data + 'T00:00:00');
-            const key = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
-            if (!grupos[key]) grupos[key] = [];
-            grupos[key].push(t);
-        });
-        let html = '';
-        for (let data in grupos) {
-            html += `<div class="grupo-transacoes"><div class="grupo-data">${data}</div>`;
-            grupos[data].forEach(t => {
-                const conta = contas.find(c => c.id === t.contaId);
-                const icone = t.tipo === 'receita' ? '📈' : '📉';
-                const prefixo = t.tipo === 'receita' ? '+' : '-';
-                const desc = t.descricao || t.categoria;
-                html += `<div class="transacao-item"><div class="transacao-icone">${icone}</div>
-                    <div class="transacao-info"><div class="transacao-descricao">${desc}</div><div class="transacao-conta">${conta?.nome || 'Conta'} • ${t.categoria}</div></div>
-                    <div class="transacao-valor ${t.tipo === 'receita' ? 'receita' : 'despesa'}">${prefixo} ${formatarMoeda(t.valor)}</div></div>`;
-            });
-            html += `</div>`;
-        }
-        container.innerHTML = html;
-    }
-
-    function renderizarEmprestimos() {
+    function atualizarTudo() {
+        atualizarCabecalho();
+        
+        // Preparar estado para renderização
+        const estado = { contas, transacoes, mesAtual, anoAtual, orcamentos, categorias };
+        const utils = { getEl, abrirModal, renderizarIconeConta };
+        
+        renderizarDashboard(estado, utils, Mascaras, Calculos);
+        renderizarTransacoesAgrupadas(estado, utils, Mascaras);
+        
+        // Empréstimos (mantido inline por simplicidade)
         const container = getEl('lista-emprestimos');
         const empty = getEl('empty-emprestimos');
         if (emprestimos.length === 0) {
-            container.innerHTML = '';
-            empty.style.display = 'block';
+            if (container) container.innerHTML = '';
+            if (empty) empty.style.display = 'block';
             getEl('total-emprestado').textContent = formatarMoeda(0);
             getEl('total-a-receber').textContent = formatarMoeda(0);
-            return;
+        } else {
+            if (empty) empty.style.display = 'none';
+            let html = '';
+            let totalEmp = 0, totalRec = 0;
+            emprestimos.forEach(e => {
+                const valor = e.valorPrincipal || 0;
+                if (e.tipo === 'emprestei') totalEmp += valor;
+                else totalRec += valor;
+                const parcelasRestantes = e.parcelas?.filter(p => p.status !== 'pago').length || 0;
+                html += `<div class="emprestimo-item">
+                    <div><strong>${e.nome}</strong><br><small>${parcelasRestantes} parcela(s) pendente(s)</small></div>
+                    <div style="color: ${e.tipo === 'emprestei' ? '#10b981' : '#dc2626'};">${e.tipo === 'emprestei' ? '+ ' : '- '}${formatarMoeda(valor)}</div>
+                </div>`;
+            });
+            if (container) container.innerHTML = html;
+            getEl('total-emprestado').textContent = formatarMoeda(totalEmp);
+            getEl('total-a-receber').textContent = formatarMoeda(totalRec);
         }
-        empty.style.display = 'none';
-        let html = '';
-        let totalEmp = 0, totalRec = 0;
-        emprestimos.forEach(e => {
-            const valor = e.valorPrincipal || 0;
-            if (e.tipo === 'emprestei') totalEmp += valor;
-            else totalRec += valor;
-            const parcelasRestantes = e.parcelas?.filter(p => p.status !== 'pago').length || 0;
-            html += `<div class="emprestimo-item">
-                <div><strong>${e.nome}</strong><br><small>${parcelasRestantes} parcela(s) pendente(s)</small></div>
-                <div style="color: ${e.tipo === 'emprestei' ? '#10b981' : '#dc2626'};">${e.tipo === 'emprestei' ? '+ ' : '- '}${formatarMoeda(valor)}</div>
-            </div>`;
-        });
-        container.innerHTML = html;
-        getEl('total-emprestado').textContent = formatarMoeda(totalEmp);
-        getEl('total-a-receber').textContent = formatarMoeda(totalRec);
-    }
-
-    function renderizarPlanejamento() {
-        const container = getEl('planejamento-container');
-        const gastos = calcularGastosPorCategoria();
-        const categoriasPlanejadas = categorias.filter(c => orcamentos[c.nome]);
-        if (categoriasPlanejadas.length === 0) {
-            container.innerHTML = `<div class="empty-state"><p>📝 Nenhum orçamento definido.</p></div>`;
-            return;
+        
+        if (getEl('tela-planejamento').classList.contains('ativa')) {
+            renderizarPlanejamento(estado, utils, Mascaras, Calculos);
         }
-        let html = '';
-        categoriasPlanejadas.forEach(cat => {
-            const limite = orcamentos[cat.nome];
-            const gasto = gastos[cat.nome] || 0;
-            const percentual = limite > 0 ? (gasto / limite) * 100 : 0;
-            html += `<div class="orcamento-item"><div class="orcamento-header"><span>${cat.icone} ${cat.nome}</span><span>${formatarMoeda(gasto)} / ${formatarMoeda(limite)}</span></div>
-                <div class="limite-barra-container"><div class="limite-barra"><div class="limite-barra-preenchida" style="width: ${Math.min(percentual, 100)}%; background: ${percentual > 100 ? '#dc2626' : '#059669'};"></div></div></div></div>`;
-        });
-        container.innerHTML = html;
-        if (planejamentoChartInstance) planejamentoChartInstance.destroy();
-        const ctx = getEl('grafico-planejamento').getContext('2d');
-        planejamentoChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: categoriasPlanejadas.map(c => c.nome),
-                datasets: [
-                    { label: 'Gasto', data: categoriasPlanejadas.map(c => gastos[c.nome] || 0), backgroundColor: '#f97316' },
-                    { label: 'Limite', data: categoriasPlanejadas.map(c => orcamentos[c.nome]), backgroundColor: '#3b82f6' }
-                ]
-            },
-            options: { responsive: true }
-        });
-    }
-
-    function atualizarTudo() {
-        atualizarCabecalho();
-        renderizarDashboard();
-        renderizarTransacoesAgrupadas();
-        renderizarEmprestimos();
-        if (getEl('tela-planejamento').classList.contains('ativa')) renderizarPlanejamento();
-    }
-
-    function abrirModal(modalOverlay) {
-        modalOverlay.style.display = 'flex';
-        setTimeout(() => modalOverlay.classList.add('ativo'), 10);
-    }
-    function fecharModal(modalOverlay) {
-        modalOverlay.classList.remove('ativo');
-        setTimeout(() => modalOverlay.style.display = 'none', 300);
     }
 
     // Continua na Parte 2...
-    // ---------- BACKUP E EXPORTAÇÃO ----------
-    function exportarBackup() {
-        const backup = { versao: APP_VERSION, data: new Date().toISOString(), contas, transacoes, emprestimos, orcamentos, categorias };
-        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `meu-dinheiro-backup-${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert('✅ Backup exportado com sucesso!');
-    }
-
-    function importarBackup(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const backup = JSON.parse(e.target.result);
-                if (!backup.contas || !backup.transacoes) throw new Error('Arquivo inválido');
-                if (confirm('Importar backup substituirá todos os dados atuais. Continuar?')) {
-                    contas = backup.contas;
-                    transacoes = backup.transacoes;
-                    emprestimos = backup.emprestimos || [];
-                    orcamentos = backup.orcamentos || {};
-                    if (backup.categorias) categorias = backup.categorias;
-                    salvarLocal();
-                    location.reload();
-                }
-            } catch (error) { alert('❌ Arquivo de backup inválido.'); }
-            event.target.value = '';
-        };
-        reader.readAsText(file);
-    }
-
-    function exportarParaCSV() {
-        if (transacoes.length === 0) return alert('Nenhuma transação para exportar.');
-        let csv = 'Data,Tipo,Categoria,Descrição,Conta,Valor (R$)\n';
-        transacoes.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(t => {
-            const conta = contas.find(c => c.id === t.contaId)?.nome || 'Conta';
-            const valor = t.tipo === 'despesa' ? -t.valor : t.valor;
-            csv += `${t.data},${t.tipo},${t.categoria},${t.descricao || ''},${conta},${valor.toFixed(2).replace('.',',')}\n`;
-        });
-        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `meu-dinheiro-${mesAtual+1}-${anoAtual}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    // ---------- LISTENERS ----------
     function configurarListeners() {
         getEl('fab-adicionar').addEventListener('click', () => {
             getEl('modal-data').valueAsDate = new Date();
             abrirModal(getEl('modal-transacao'));
-            renderizarChipsCategorias();
+            renderizarChipsCategorias(getEl('categorias-chips-container'), categorias, categoriaSelecionada, (cat) => categoriaSelecionada = cat);
         });
 
         getEl('toggle-emprestimos').addEventListener('click', () => {
@@ -478,7 +199,7 @@ import {
             emprestimos.push(novo);
             salvarLocal();
             if (usandoFirebase) await salvarEmprestimoFirebase(novo);
-            renderizarEmprestimos();
+            atualizarTudo();
             fecharModal(getEl('modal-emprestimo'));
         });
 
@@ -507,7 +228,7 @@ import {
             salvarLocal();
             if (usandoFirebase) await salvarContaFirebase(nova);
             fecharModal(getEl('modal-contas'));
-            renderizarDashboard();
+            atualizarTudo();
         });
 
         getEl('salvar-transacao-modal').addEventListener('click', async () => {
@@ -528,10 +249,7 @@ import {
             atualizarTudo();
         });
 
-        const btnFecharTransacao = getEl('fechar-modal-transacao-btn');
-        if (btnFecharTransacao) {
-            btnFecharTransacao.addEventListener('click', () => fecharModal(getEl('modal-transacao')));
-        }
+        getEl('fechar-modal-transacao-btn').addEventListener('click', () => fecharModal(getEl('modal-transacao')));
 
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -540,25 +258,9 @@ import {
                 getEl(`tela-${tela}`).classList.add('ativa');
                 document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('ativo'));
                 item.classList.add('ativo');
-                if (tela === 'planejamento') renderizarPlanejamento();
+                if (tela === 'planejamento') atualizarTudo();
             });
         });
-
-        window.renderizarChipsCategorias = () => {
-            const container = getEl('categorias-chips-container');
-            container.innerHTML = '';
-            categorias.forEach(cat => {
-                const chip = document.createElement('span');
-                chip.className = `categoria-chip ${categoriaSelecionada === cat.nome ? 'ativo' : ''}`;
-                chip.innerHTML = `<i data-lucide="${cat.icone}"></i> ${cat.nome}`;
-                chip.addEventListener('click', () => {
-                    categoriaSelecionada = cat.nome;
-                    renderizarChipsCategorias();
-                });
-                container.appendChild(chip);
-            });
-            lucide.createIcons();
-        };
 
         getEl('tipo-receita-btn').addEventListener('click', () => {
             tipoTransacaoAtual = 'receita';
@@ -575,6 +277,7 @@ import {
             getEl('modal-recebido').closest('label').style.display = 'none';
         });
 
+        // Dropdown meses
         getEl('btn-toggle-meses').addEventListener('click', (e) => {
             e.stopPropagation();
             const dd = getEl('meses-dropdown');
@@ -613,10 +316,17 @@ import {
             }
         });
 
-        getEl('btn-exportar-backup')?.addEventListener('click', exportarBackup);
+        getEl('btn-exportar-backup')?.addEventListener('click', () => exportarBackup(contas, transacoes, emprestimos, orcamentos, categorias, APP_VERSION));
         getEl('btn-importar-backup')?.addEventListener('click', () => getEl('input-importar-backup').click());
-        getEl('input-importar-backup')?.addEventListener('change', importarBackup);
-        getEl('btn-exportar-excel')?.addEventListener('click', exportarParaCSV);
+        getEl('input-importar-backup')?.addEventListener('change', (e) => importarBackup(e, (backup) => {
+            contas = backup.contas;
+            transacoes = backup.transacoes;
+            emprestimos = backup.emprestimos || [];
+            orcamentos = backup.orcamentos || {};
+            if (backup.categorias) categorias = backup.categorias;
+            salvarLocal();
+        }));
+        getEl('btn-exportar-excel')?.addEventListener('click', () => exportarParaCSV(transacoes, contas, mesAtual, anoAtual));
 
         const itemSobre = getEl('item-sobre');
         if (itemSobre) {
@@ -625,32 +335,20 @@ import {
         }
     }
 
-    // ---------- INICIALIZAÇÃO ----------
     async function init() {
         await handleRedirectResult();
-        
         carregarLocal();
         configurarMascaras();
-        atualizarCabecalho();
-        renderizarDashboard();
-        renderizarTransacoesAgrupadas();
-        renderizarEmprestimos();
+        atualizarTudo();
         configurarListeners();
 
         observarAuth(async (user) => {
             currentUser = user;
             usandoFirebase = !!user;
+            atualizarPerfilUI(user, getEl);
             if (user) {
-                getEl('perfil-nome').textContent = user.displayName || 'Usuário';
-                getEl('perfil-email').textContent = user.email;
-                getEl('btn-login-google').style.display = 'none';
-                getEl('btn-logout').style.display = 'block';
                 await carregarFirebase(user.uid);
             } else {
-                getEl('perfil-nome').textContent = 'Usuário Local';
-                getEl('perfil-email').textContent = 'Modo offline';
-                getEl('btn-login-google').style.display = 'block';
-                getEl('btn-logout').style.display = 'none';
                 carregarLocal();
                 atualizarTudo();
             }
