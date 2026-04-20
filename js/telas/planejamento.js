@@ -3,7 +3,7 @@
     "use strict";
 
     function renderizarPlanejamento(estado, utils, mascaras, calculos) {
-        const { contas, transacoes, mesAtual, anoAtual, orcamentos, categorias } = estado;
+        const { orcamentos, categorias } = estado;
         const { getEl } = utils;
         const { formatarMoeda } = mascaras;
         const { calcularGastosPorCategoria } = calculos;
@@ -11,7 +11,7 @@
         const container = getEl('planejamento-container');
         if (!container) return;
         
-        const gastos = calcularGastosPorCategoria(transacoes, mesAtual, anoAtual);
+        const gastos = calcularGastosPorCategoria(estado.transacoes, estado.mesAtual, estado.anoAtual);
         const categoriasPlanejadas = categorias.filter(c => orcamentos[c.nome]);
         
         if (categoriasPlanejadas.length === 0) {
@@ -32,7 +32,6 @@
         });
         container.innerHTML = html;
 
-        // Gráfico
         const ctx = getEl('grafico-planejamento')?.getContext('2d');
         if (ctx) {
             if (estado.planejamentoChartInstance) estado.planejamentoChartInstance.destroy();
