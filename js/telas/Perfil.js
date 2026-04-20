@@ -1,4 +1,4 @@
-// Tela de Perfil (lógica de UI relacionada ao perfil)
+// Tela de Perfil
 (function(global) {
     "use strict";
 
