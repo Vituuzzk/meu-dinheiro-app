@@ -1,5 +1,10 @@
-* { box-sizing: border-box; margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-body { background: #f0fdf4; display: flex; justify-content: center; padding-bottom: 80px; }
+html {
+    scroll-behavior: smooth;
+    background: #d1fae5;
+}
+
+* { box-sizing: border-box; margin: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f0fdf4; display: flex; justify-content: center; padding-bottom: 80px; }
 .app-container { max-width: 480px; width: 100%; margin: 0 auto; padding: 20px 16px 0; }
 .tela { display: none; }
 .tela.ativa { display: block; }
@@ -34,6 +39,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     font-size: 20px;
     font-weight: bold;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .btn-ano-seta:active {
     transform: scale(0.92);
@@ -53,6 +59,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     color: #059669;
     font-size: 18px;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .btn-dropdown-mes:active {
     transform: scale(0.92);
@@ -92,6 +99,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     cursor: pointer;
     text-align: center;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .mes-chip:active {
     transform: scale(0.95);
@@ -116,6 +124,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     color: #065f46;
     cursor: pointer;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .btn-acao:active {
     transform: scale(0.97);
@@ -135,7 +144,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     background: white;
     border-radius: 24px;
     padding: 22px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     margin-bottom: 20px;
     border: 1px solid #d1fae5;
 }
@@ -147,7 +156,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 }
 .card-header h3 {
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
     color: #064e3b;
 }
 .card-header a {
@@ -158,6 +167,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     padding: 6px 8px;
     border-radius: 12px;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .card-header a:active {
     transform: scale(0.94);
@@ -182,6 +192,8 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     font-weight: 800;
     letter-spacing: -1px;
     margin-bottom: 20px;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
 }
 .resumo-linha {
     display: flex;
@@ -199,6 +211,8 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .resumo-item .valor {
     font-size: 20px;
     font-weight: 700;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
 }
 .receita .valor { color: #a7f3d0; }
 .despesa .valor { color: #fecaca; }
@@ -216,8 +230,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
 .conta-item:active {
     transform: scale(0.99);
     background: #f9fefb;
-    margin: 0 -22px;
-    padding: 16px 22px;
+    box-shadow: inset 0 0 0 22px #f9fefb;
 }
 .conta-item:last-child { border-bottom: none; }
 .conta-info {
@@ -242,13 +255,15 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     margin-bottom: 2px;
 }
 .conta-detalhes .subtitulo {
-    font-size: 13px;
+    font-size: 15px;
     color: #6b7280;
 }
 .conta-saldo {
     font-weight: 700;
     font-size: 20px;
     color: #065f46;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
 }
 
 /* Cartão de Crédito */
@@ -278,7 +293,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     border-radius: 6px;
 }
 .cartao-datas {
-    font-size: 14px;
+    font-size: 15px;
     color: #6b7280;
     margin-top: 10px;
     display: flex;
@@ -310,6 +325,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     display: inline-block;
     border-radius: 40px;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .btn-outline:active {
     transform: scale(0.96);
@@ -327,7 +343,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     background: white;
     display: flex;
     justify-content: space-around;
-    padding: 14px 20px 24px;
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
     border-top: 1px solid #e5e7eb;
     box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
     z-index: 100;
@@ -347,6 +363,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     width: auto;
     margin: 0;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .menu-item:active {
     transform: scale(0.94);
@@ -379,6 +396,7 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     align-items: center;
     justify-content: center;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .fab:active {
     transform: scale(0.9);
@@ -390,12 +408,12 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     background: rgba(0,0,0,0.5);
     display: none;
     justify-content: center;
-    align-items: flex-end !important; /* Alinha o modal na parte de baixo */
+    align-items: flex-end !important;
     z-index: 1000;
 }
 .modal {
     background: white;
-    border-radius: 28px;
+    border-radius: 28px 28px 0 0;
     padding: 26px;
     width: 90%;
     max-width: 420px;
@@ -403,6 +421,16 @@ body { background: #f0fdf4; display: flex; justify-content: center; padding-bott
     overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+.modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 2px;
+    margin: 0 auto 16px;
 }
 .modal-overlay.ativo .modal {
     transform: translateY(0);
@@ -437,6 +465,7 @@ button {
     margin-top: 16px;
     cursor: pointer;
     transition: all 0.15s ease;
+    user-select: none;
 }
 button:active {
     transform: scale(0.98);
@@ -446,20 +475,39 @@ button:active {
     background: #fee2e2;
     color: #dc2626;
 }
+
+/* Botões de tipo (Receita/Despesa) - Unificado e sem !important */
 .tipo-transacao-btn {
-    padding: 14px;
+    padding: 10px 8px;
     border: none;
-    border-radius: 20px;
+    border-radius: 16px;
     font-weight: 600;
+    font-size: 14px;
     color: white;
     transition: all 0.15s ease;
     margin: 0;
+    flex: 1;
+    user-select: none;
+}
+.tipo-transacao-btn:not(.ativo) {
+    opacity: 0.8;
+}
+.tipo-transacao-btn.ativo {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 .tipo-transacao-btn:active {
     transform: scale(0.97);
 }
-.tipo-transacao-btn.ativo {
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+.tipo-transacao-btn#tipo-despesa-btn {
+    background: #9ca3af;
+}
+.tipo-transacao-btn#tipo-despesa-btn.ativo {
+    background: #dc2626;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+.tipo-transacao-btn#tipo-receita-btn.ativo {
+    background: #10b981;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
 }
 
 /* Transações */
@@ -506,12 +554,14 @@ button:active {
     margin-bottom: 4px;
 }
 .transacao-conta {
-    font-size: 14px;
+    font-size: 15px;
     color: #6b7280;
 }
 .transacao-valor {
     font-weight: 700;
     font-size: 20px;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
 }
 .transacao-valor.receita { color: #10b981; }
 .transacao-valor.despesa { color: #dc2626; }
@@ -541,6 +591,7 @@ button:active {
     cursor: pointer;
     transition: all 0.15s ease;
     margin: 0;
+    user-select: none;
 }
 .aba-btn:active {
     transform: scale(0.97);
@@ -569,6 +620,7 @@ button:active {
     display: flex;
     align-items: center;
     gap: 14px;
+    user-select: none;
 }
 .opcao-item:active {
     transform: scale(0.99);
@@ -611,6 +663,7 @@ button:active {
     padding: 8px;
     margin: 0;
     color: #059669;
+    user-select: none;
 }
 .config-section {
     background: white;
@@ -647,6 +700,7 @@ button:active {
     cursor: pointer;
     border: 1px solid transparent;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .categoria-chip:active {
     transform: scale(0.95);
@@ -659,6 +713,10 @@ button:active {
 .categoria-chip i {
     vertical-align: middle;
     color: inherit;
+    transition: transform 0.2s ease;
+}
+.categoria-chip:active i {
+    transform: scale(1.1);
 }
 
 /* Placeholders */
@@ -686,6 +744,7 @@ button:active {
     background: #f3f4f6;
     color: #374151;
     font-weight: 600;
+    user-select: none;
 }
 
 /* Planejamento - Itens de Orçamento */
@@ -701,9 +760,6 @@ button:active {
     color: #374151;
     margin-bottom: 8px;
 }
-body.dark-theme .orcamento-header { color: #e0e0e0; }
-
-/* ===== NOVOS ESTILOS ADICIONADOS ===== */
 
 /* Tela de Login */
 .tela-login-overlay {
@@ -747,6 +803,7 @@ body.dark-theme .orcamento-header { color: #e0e0e0; }
     color: #1f2937;
     cursor: pointer;
     transition: all 0.15s ease;
+    user-select: none;
 }
 .btn-login-google:active {
     transform: scale(0.98);
@@ -792,18 +849,12 @@ body.dark-theme .orcamento-header { color: #e0e0e0; }
     padding: 12px;
     border-radius: 16px;
 }
-body.dark-theme .resumo-emprestimos {
-    background: #1e1e1e;
-}
 .emprestimo-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
     border-bottom: 1px solid #eee;
-}
-body.dark-theme .emprestimo-item {
-    border-bottom-color: #2a2a2a;
 }
 
 /* Sub-abas (Investimentos) */
@@ -812,62 +863,4 @@ body.dark-theme .emprestimo-item {
 }
 .subaba-conteudo.ativo {
     display: block;
-}
-
-/* Ajustes para tema escuro nos novos componentes */
-body.dark-theme .login-card {
-    background: #1e1e1e;
-    color: #e0e0e0;
-}
-body.dark-theme .login-header h1 {
-    color: #6ee7b7;
-}
-body.dark-theme .login-header p {
-    color: #9ca3af;
-}
-body.dark-theme .btn-login-google {
-    background: #1e1e1e;
-    border-color: #2a2a2a;
-    color: #e0e0e0;
-}
-body.dark-theme .btn-login-google:active {
-    background: #2a2a2a;
-}
-body.dark-theme .perfil-foto {
-    background: #1a3a5c;
-    color: #64b5f6;
-}
-/* Botões de alternância Receita/Despesa - Mais compactos */
-.tipo-transacao-btn {
-    padding: 10px 8px;          /* Reduzido de 14px */
-    border: none;
-    border-radius: 16px;
-    font-weight: 600;
-    font-size: 14px;            /* Reduzido */
-    color: white;
-    transition: all 0.15s ease;
-    margin: 0;
-    flex: 1;
-}
-
-/* Cor de fundo padrão para Despesa (inativo) */
-#tipo-despesa-btn {
-    background: #9ca3af !important;
-}
-
-/* Cor de fundo para Despesa ATIVO */
-#tipo-despesa-btn.ativo {
-    background: #dc2626 !important;  /* Vermelho */
-    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
-}
-
-/* Cor de fundo para Receita ATIVO */
-#tipo-receita-btn.ativo {
-    background: #10b981 !important;  /* Verde */
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
-}
-
-/* Remove estilos inline conflitantes (se houver) */
-.tipo-transacao-btn:not(.ativo) {
-    opacity: 0.8;
 }
